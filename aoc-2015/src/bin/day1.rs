@@ -41,6 +41,7 @@ fn count_floor(input: &str) -> Result<i32> {
 
 fn entrance_pos(input: &str, wanted_floor: i32) -> Result<Option<usize>> {
     let mut floor = 0;
+    let mut result = None;
     for (pos, ch) in input.chars().enumerate() {
         if ch == '(' {
             floor += 1;
@@ -49,11 +50,11 @@ fn entrance_pos(input: &str, wanted_floor: i32) -> Result<Option<usize>> {
         } else {
             return Err(Error::InvalidInput);
         }
-        if floor == wanted_floor {
-            return Ok(Some(pos + 1));
+        if floor == wanted_floor && result == None {
+            result = Some(pos + 1);
         }
     }
-    Ok(None)
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -108,5 +109,39 @@ mod count_floor {
     #[test]
     fn count_floor_invalid_1() {
         assert_eq!(count_floor("()1"), Err(Error::InvalidInput));
+    }
+}
+
+#[cfg(test)]
+mod entrance_pos {
+    use super::{Error, Result};
+
+    fn entrance_pos(input: &str) -> Result<Option<usize>> {
+        super::entrance_pos(input, -1)
+    }
+
+    #[test]
+    fn entrance_pos_1() {
+        assert_eq!(entrance_pos(")"), Ok(Some(1)));
+    }
+
+    #[test]
+    fn entrance_pos_2() {
+        assert_eq!(entrance_pos("()())"), Ok(Some(5)));
+    }
+
+    #[test]
+    fn entrance_pos_no_entrance_1() {
+        assert_eq!(entrance_pos("()()"), Ok(None));
+    }
+
+    #[test]
+    fn entrance_pos_invalid_1() {
+        assert_eq!(entrance_pos(")1"), Err(Error::InvalidInput));
+    }
+
+    #[test]
+    fn entrance_pos_invalid_2() {
+        assert_eq!(entrance_pos("1)"), Err(Error::InvalidInput));
     }
 }
