@@ -17,7 +17,7 @@ fn main() -> Result<()> {
     );
     let santa_and_robot_report = DeliveryReport::new(
         "Santa and Robot".to_owned(),
-        TurnCarrier::new(Point { x: 0, y: 0 }, &moves, 2),
+        TurnCarriers::new(Point { x: 0, y: 0 }, &moves, 2),
     );
 
     for d in [&santa_report, &santa_and_robot_report] {
@@ -184,13 +184,13 @@ impl<'a> Carrier for SingleCarrier<'a> {
 
 /// Several carriers, which visits every point in a path according to moves,
 /// which are taken in turn from common moves list.
-struct TurnCarrier<'a> {
+struct TurnCarriers<'a> {
     start_point: Point,
     moves: &'a Moves,
     num_of_carriers: usize,
 }
 
-impl<'a> TurnCarrier<'a> {
+impl<'a> TurnCarriers<'a> {
     fn new(start_point: Point, moves: &'a Moves, num_of_carriers: usize) -> Self {
         Self {
             start_point,
@@ -200,7 +200,7 @@ impl<'a> TurnCarrier<'a> {
     }
 }
 
-impl<'a> Carrier for TurnCarrier<'a> {
+impl<'a> Carrier for TurnCarriers<'a> {
     fn visit(self, pathway: &mut Pathway) {
         let mut do_visit = |offset: usize| {
             let santa_moves: Moves = self
