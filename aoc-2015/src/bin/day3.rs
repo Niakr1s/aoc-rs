@@ -13,11 +13,11 @@ fn main() -> Result<()> {
 
     let santa_report = DeliveryReport::new(
         "Santa".to_owned(),
-        SingleCarrier::new(Point { x: 0, y: 0 }, &moves),
+        DeliveryMap::new().visit_by(SingleCarrier::new(Point { x: 0, y: 0 }, &moves)),
     );
     let santa_and_robot_report = DeliveryReport::new(
         "Santa and Robot".to_owned(),
-        TurnCarriers::new(Point { x: 0, y: 0 }, &moves, 2),
+        DeliveryMap::new().visit_by(TurnCarriers::new(Point { x: 0, y: 0 }, &moves, 2)),
     );
 
     for d in [&santa_report, &santa_and_robot_report] {
@@ -33,9 +33,7 @@ struct DeliveryReport {
 }
 
 impl DeliveryReport {
-    fn new<C: Carrier>(name: String, carrier: C) -> Self {
-        let mut delivery_map = DeliveryMap::new();
-        carrier.visit(&mut delivery_map);
+    fn new(name: String, delivery_map: DeliveryMap) -> Self {
         Self { name, delivery_map }
     }
 
@@ -141,6 +139,11 @@ struct DeliveryMap(HashMap<Point, u32>);
 impl DeliveryMap {
     pub fn new() -> Self {
         Self(HashMap::new())
+    }
+
+    pub fn visit_by<C: Carrier>(mut self, carrier: C) -> Self {
+        carrier.visit(&mut self);
+        self
     }
 
     pub fn visit_point(&mut self, point: &Point) {
