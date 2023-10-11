@@ -11,19 +11,37 @@ fn main() -> Result<()> {
 
     let moves: Moves = File::open(filepath)?.try_into()?;
 
-    let santa_pathway = Pathway::new().visit(SingleCarrier::new(Point { x: 0, y: 0 }, &moves));
-    println!("Santa visited houses: {}", santa_pathway.len());
-    drop(santa_pathway);
-
-    let santa_with_robot_pathway =
-        Pathway::new().visit(TurnCarrier::new(Point { x: 0, y: 0 }, &moves, 2));
-    println!(
-        "Santa and Robot visited houses: {}",
-        santa_with_robot_pathway.len()
+    let santa_report = DeliveryReport::new(
+        "Santa".to_owned(),
+        SingleCarrier::new(Point { x: 0, y: 0 }, &moves),
     );
-    drop(santa_with_robot_pathway);
+    let santa_and_robot_report = DeliveryReport::new(
+        "Santa and Robot".to_owned(),
+        TurnCarrier::new(Point { x: 0, y: 0 }, &moves, 2),
+    );
+
+    for d in [&santa_report, &santa_and_robot_report] {
+        d.print_visited_houses();
+    }
 
     Ok(())
+}
+
+struct DeliveryReport {
+    name: String,
+    pathway: Pathway,
+}
+
+impl DeliveryReport {
+    fn new<C: Carrier>(name: String, carrier: C) -> Self {
+        let mut pathway = Pathway::new();
+        carrier.visit(&mut pathway);
+        Self { name, pathway }
+    }
+
+    fn print_visited_houses(&self) {
+        println!("{} visited houses: {}", self.name, self.pathway.len());
+    }
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
