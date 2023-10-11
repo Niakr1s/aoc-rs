@@ -143,9 +143,11 @@ impl Pathway {
         Self(HashMap::new())
     }
 
-    pub fn visit(mut self, carrier: impl Carrier) -> Self {
-        carrier.visit(&mut self);
-        self
+    pub fn visit_point(&mut self, point: &Point) {
+        self.0
+            .entry(point.clone())
+            .and_modify(|x| *x += 1)
+            .or_insert(1);
     }
 
     pub fn len(&self) -> usize {
@@ -170,15 +172,12 @@ impl<'a> SingleCarrier<'a> {
 }
 
 impl<'a> Carrier for SingleCarrier<'a> {
-    fn visit(self, Pathway(pathway): &mut Pathway) {
+    fn visit(self, pathway: &mut Pathway) {
         let mut current = self.start_point;
-        pathway.insert(current.clone(), 0);
+        pathway.visit_point(&current);
         for mv in &self.moves.0 {
             current = current + mv;
-            pathway
-                .entry(current.clone())
-                .and_modify(|x| *x += 1)
-                .or_insert(1);
+            pathway.visit_point(&current);
         }
     }
 }
@@ -209,7 +208,6 @@ impl<'a> Carrier for TurnCarrier<'a> {
                 .0
                 .iter()
                 .enumerate()
-                .clone()
                 .filter_map(|(i, &mv)| {
                     if i % self.num_of_carriers == offset {
                         Some(mv)
