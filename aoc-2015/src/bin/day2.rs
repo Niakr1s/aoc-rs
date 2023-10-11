@@ -12,12 +12,22 @@ fn main() -> Result<()> {
     let file: std::fs::File = std::fs::File::open(filepath)?;
     let reader = std::io::BufReader::new(file);
 
-    let wrapping_paper: u32 = reader
+    let present_boxes = reader
         .lines()
         .flat_map(|l| l.map(|l| PresentBox::try_from(l.as_str())))
-        .map(|b| b.map(|b| b.wrapping_paper_needed()))
-        .try_fold(0, |acc, x| -> Result<u32> { Ok(acc + x?) })?;
+        .collect::<Result<Vec<PresentBox>>>()?;
+
+    let wrapping_paper: u32 = present_boxes
+        .iter()
+        .map(|b| b.wrapping_paper_needed())
+        .fold(0, |acc, x| acc + x);
     println!("Wrapping paper needed: {}", wrapping_paper);
+
+    let ribbon: u32 = present_boxes
+        .iter()
+        .map(|b| b.ribbon_needed())
+        .fold(0, |acc, x| acc + x);
+    println!("Ribbon needed: {}", ribbon);
 
     Ok(())
 }
@@ -49,14 +59,27 @@ impl PresentBox {
             + 2 * self.length as u32 * self.height as u32
     }
 
-    fn get_smallest_side_area(&self) -> u32 {
+    fn get_smallest_side(&self) -> (u8, u8) {
         let mut sides = [self.height, self.width, self.length];
         sides.sort();
-        sides[0] as u32 * sides[1] as u32
+        (sides[0], sides[1])
+    }
+
+    fn get_smallest_side_area(&self) -> u32 {
+        let (a, b) = self.get_smallest_side();
+        a as u32 * b as u32
     }
 
     fn wrapping_paper_needed(&self) -> u32 {
         self.get_surface_area() + self.get_smallest_side_area()
+    }
+
+    fn ribbon_needed(&self) -> u32 {
+        let (a, b) = self.get_smallest_side();
+        let (a, b) = (a as u32, b as u32);
+        let wrap = 2 * (a + b);
+        let bow = self.height as u32 * self.width as u32 * self.length as u32;
+        wrap + bow
     }
 }
 
