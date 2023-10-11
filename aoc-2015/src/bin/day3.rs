@@ -10,9 +10,18 @@ fn main() -> Result<()> {
     let filepath: PathBuf = filepath.unwrap().into();
 
     let moves: Moves = File::open(filepath)?.try_into()?;
-    let pathway: Pathway = moves.into();
 
-    println!("Visited houses: {}", pathway.len());
+    let santa_pathway = Pathway::new().visit(SingleCarrier::new(Point { x: 0, y: 0 }, &moves));
+    println!("Santa visited houses: {}", santa_pathway.len());
+    drop(santa_pathway);
+
+    let santa_with_robot_pathway =
+        Pathway::new().visit(TurnCarrier::new(Point { x: 0, y: 0 }, &moves, 2));
+    println!(
+        "Santa and Robot visited houses: {}",
+        santa_with_robot_pathway.len()
+    );
+    drop(santa_with_robot_pathway);
 
     Ok(())
 }
@@ -31,6 +40,7 @@ impl From<std::io::Error> for Error {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 enum Move {
     Up,
     Down,
@@ -110,25 +120,90 @@ impl std::ops::Add<&Move> for Point {
 
 struct Pathway(HashMap<Point, u32>);
 
-impl<T: AsRef<[Move]>> From<T> for Pathway {
-    fn from(moves: T) -> Self {
-        let moves: &[Move] = moves.as_ref();
-        let mut current = Point { x: 0, y: 0 };
-        let mut pathway = HashMap::new();
+impl Pathway {
+    pub fn new() -> Self {
+        Self(HashMap::new())
+    }
+
+    pub fn visit(mut self, carrier: impl Carrier) -> Self {
+        carrier.visit(&mut self);
+        self
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+trait Carrier {
+    fn visit(self, pathway: &mut Pathway);
+}
+
+struct SingleCarrier<'a> {
+    start_point: Point,
+    moves: &'a Moves,
+}
+
+impl<'a> SingleCarrier<'a> {
+    fn new(start_point: Point, moves: &'a Moves) -> Self {
+        Self { start_point, moves }
+    }
+}
+
+impl<'a> Carrier for SingleCarrier<'a> {
+    fn visit(self, Pathway(pathway): &mut Pathway) {
+        let mut current = self.start_point;
         pathway.insert(current.clone(), 0);
-        for mv in moves {
+        for mv in &self.moves.0 {
             current = current + mv;
             pathway
                 .entry(current.clone())
                 .and_modify(|x| *x += 1)
                 .or_insert(1);
         }
-        Pathway(pathway)
     }
 }
 
-impl Pathway {
-    pub fn len(&self) -> usize {
-        self.0.len()
+struct TurnCarrier<'a> {
+    start_point: Point,
+    moves: &'a Moves,
+    num_of_carriers: usize,
+}
+
+impl<'a> TurnCarrier<'a> {
+    fn new(start_point: Point, moves: &'a Moves, num_of_carriers: usize) -> Self {
+        Self {
+            start_point,
+            moves,
+            num_of_carriers,
+        }
+    }
+}
+
+impl<'a> Carrier for TurnCarrier<'a> {
+    fn visit(self, pathway: &mut Pathway) {
+        let mut do_visit = |offset: usize| {
+            let santa_moves: Moves = self
+                .moves
+                .0
+                .iter()
+                .enumerate()
+                .clone()
+                .filter_map(|(i, &mv)| {
+                    if i % self.num_of_carriers == offset {
+                        Some(mv)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<Move>>()
+                .into();
+            let santa = SingleCarrier::new(self.start_point.clone(), &santa_moves);
+            santa.visit(pathway);
+        };
+
+        for offset in 0..self.num_of_carriers {
+            do_visit(offset);
+        }
     }
 }
