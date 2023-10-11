@@ -29,18 +29,18 @@ fn main() -> Result<()> {
 
 struct DeliveryReport {
     name: String,
-    pathway: Pathway,
+    delivery_map: DeliveryMap,
 }
 
 impl DeliveryReport {
     fn new<C: Carrier>(name: String, carrier: C) -> Self {
-        let mut pathway = Pathway::new();
-        carrier.visit(&mut pathway);
-        Self { name, pathway }
+        let mut delivery_map = DeliveryMap::new();
+        carrier.visit(&mut delivery_map);
+        Self { name, delivery_map }
     }
 
     fn print_visited_houses(&self) {
-        println!("{} visited houses: {}", self.name, self.pathway.len());
+        println!("{} visited houses: {}", self.name, self.delivery_map.len());
     }
 }
 
@@ -136,9 +136,9 @@ impl std::ops::Add<&Move> for Point {
     }
 }
 
-struct Pathway(HashMap<Point, u32>);
+struct DeliveryMap(HashMap<Point, u32>);
 
-impl Pathway {
+impl DeliveryMap {
     pub fn new() -> Self {
         Self(HashMap::new())
     }
@@ -156,7 +156,7 @@ impl Pathway {
 }
 
 trait Carrier {
-    fn visit(self, pathway: &mut Pathway);
+    fn visit(self, delivery_map: &mut DeliveryMap);
 }
 
 /// A single carrier, which visits every point in a path according to moves
@@ -172,12 +172,12 @@ impl<'a> SingleCarrier<'a> {
 }
 
 impl<'a> Carrier for SingleCarrier<'a> {
-    fn visit(self, pathway: &mut Pathway) {
+    fn visit(self, delivery_map: &mut DeliveryMap) {
         let mut current = self.start_point;
-        pathway.visit_point(&current);
+        delivery_map.visit_point(&current);
         for mv in &self.moves.0 {
             current = current + mv;
-            pathway.visit_point(&current);
+            delivery_map.visit_point(&current);
         }
     }
 }
@@ -201,7 +201,7 @@ impl<'a> TurnCarriers<'a> {
 }
 
 impl<'a> Carrier for TurnCarriers<'a> {
-    fn visit(self, pathway: &mut Pathway) {
+    fn visit(self, delivery_map: &mut DeliveryMap) {
         let mut do_visit = |offset: usize| {
             let santa_moves: Moves = self
                 .moves
@@ -218,7 +218,7 @@ impl<'a> Carrier for TurnCarriers<'a> {
                 .collect::<Vec<Move>>()
                 .into();
             let santa = SingleCarrier::new(self.start_point.clone(), &santa_moves);
-            santa.visit(pathway);
+            santa.visit(delivery_map);
         };
 
         for offset in 0..self.num_of_carriers {
