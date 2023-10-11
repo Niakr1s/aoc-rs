@@ -157,6 +157,7 @@ trait Carrier {
     fn visit(self, pathway: &mut Pathway);
 }
 
+/// A single carrier, which visits every point in a path according to moves
 struct SingleCarrier<'a> {
     start_point: Point,
     moves: &'a Moves,
@@ -182,6 +183,8 @@ impl<'a> Carrier for SingleCarrier<'a> {
     }
 }
 
+/// Several carriers, which visits every point in a path according to moves,
+/// which are taken in turn from common moves list.
 struct TurnCarrier<'a> {
     start_point: Point,
     moves: &'a Moves,
