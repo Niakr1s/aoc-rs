@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+md5 = "0.7.0"
 
 [[bin]]
 name = "aoc-2015-day1"
@@ -18,3 +19,7 @@ path = "src/bin/day2.rs"
 [[bin]]
 name = "aoc-2015-day3"
 path = "src/bin/day3.rs"
+
+[[bin]]
+name = "aoc-2015-day4"
+path = "src/bin/day4.rs"
