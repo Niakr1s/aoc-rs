@@ -1,8 +1,8 @@
 use std::io::BufRead;
 
-use nice::NiceStringChecker;
+use nice::Checker;
 
-use crate::nice::{NiceStringCheckerPart1, NiceStringCheckerPart2};
+use crate::nice::{CheckerPart1, CheckerPart2};
 
 fn main() -> Result<(), std::io::Error> {
     let path = std::env::args().skip(1).next().unwrap();
@@ -14,40 +14,40 @@ fn main() -> Result<(), std::io::Error> {
 
     println!(
         "Number of nice strings for part1: {}",
-        run(&lines, &NiceStringCheckerPart1::default())
+        run(&lines, &CheckerPart1::default())
     );
     println!(
         "Number of nice strings for part2: {}",
-        run(&lines, &NiceStringCheckerPart2::default())
+        run(&lines, &CheckerPart2::default())
     );
 
     Ok(())
 }
 
-fn run(lines: &Vec<String>, checker: &impl NiceStringChecker) -> usize {
+fn run(lines: &Vec<String>, checker: &impl Checker) -> usize {
     lines.iter().filter(|line| checker.is_nice(line)).count()
 }
 
 mod nice {
     use std::collections::HashSet;
 
-    pub trait NiceStringChecker {
+    pub trait Checker {
         fn is_nice<S: AsRef<str>>(&self, string: S) -> bool;
     }
 
-    pub struct NiceStringCheckerPart1 {
+    pub struct CheckerPart1 {
         want_vowels: usize,
         want_double_letter: bool,
         exclude_strings: Vec<String>,
     }
 
-    impl Default for NiceStringCheckerPart1 {
+    impl Default for CheckerPart1 {
         fn default() -> Self {
             Self::new(3, true, vec!["ab", "cd", "pq", "xy"])
         }
     }
 
-    impl NiceStringChecker for NiceStringCheckerPart1 {
+    impl Checker for CheckerPart1 {
         fn is_nice<S: AsRef<str>>(&self, string: S) -> bool {
             let string = string.as_ref();
             if Self::has_vowels(string) < self.want_vowels {
@@ -63,7 +63,7 @@ mod nice {
         }
     }
 
-    impl NiceStringCheckerPart1 {
+    impl CheckerPart1 {
         fn new<S: Into<String>>(
             want_vowels: usize,
             want_double_letter: bool,
@@ -98,22 +98,22 @@ mod nice {
         }
     }
 
-    pub struct NiceStringCheckerPart2 {}
+    pub struct CheckerPart2 {}
 
-    impl Default for NiceStringCheckerPart2 {
+    impl Default for CheckerPart2 {
         fn default() -> Self {
             Self::new()
         }
     }
 
-    impl NiceStringChecker for NiceStringCheckerPart2 {
+    impl Checker for CheckerPart2 {
         fn is_nice<S: AsRef<str>>(&self, string: S) -> bool {
             let string = string.as_ref();
             self.has_any_non_overlapped_duplex(string) && self.has_any_symmetrical_triplex(string)
         }
     }
 
-    impl NiceStringCheckerPart2 {
+    impl CheckerPart2 {
         fn new() -> Self {
             Self {}
         }
@@ -140,108 +140,87 @@ mod nice {
         }
     }
 
-    pub fn is_nice(s: &str, checker: &impl NiceStringChecker) -> bool {
+    pub fn is_nice(s: &str, checker: &impl Checker) -> bool {
         checker.is_nice(s)
     }
 
     #[cfg(test)]
-    mod tests_nice_string_checker_part1 {
+    mod tests_checker_part1 {
         use super::*;
 
         #[test]
         fn test_is_nice1() {
-            assert!(is_nice(
-                "ugknbfddgicrmopn",
-                &NiceStringCheckerPart1::default()
-            ));
+            assert!(is_nice("ugknbfddgicrmopn", &CheckerPart1::default()));
         }
 
         #[test]
         fn test_is_nice2() {
-            assert!(is_nice("aaa", &NiceStringCheckerPart1::default()));
+            assert!(is_nice("aaa", &CheckerPart1::default()));
         }
 
         #[test]
         fn test_is_nice3() {
-            assert!(!is_nice(
-                "jchzalrnumimnmhp",
-                &NiceStringCheckerPart1::default()
-            ));
+            assert!(!is_nice("jchzalrnumimnmhp", &CheckerPart1::default()));
         }
 
         #[test]
         fn test_is_nice4() {
-            assert!(!is_nice(
-                "haegwjzuvuyypxyu",
-                &NiceStringCheckerPart1::default()
-            ));
+            assert!(!is_nice("haegwjzuvuyypxyu", &CheckerPart1::default()));
         }
 
         #[test]
         fn test_is_nice5() {
-            assert!(!is_nice(
-                "dvszwmarrgswjxmb",
-                &NiceStringCheckerPart1::default()
-            ));
+            assert!(!is_nice("dvszwmarrgswjxmb", &CheckerPart1::default()));
         }
     }
 
     #[cfg(test)]
-    mod tests_nice_string_checker_part2 {
+    mod tests_checker_part2 {
         use super::*;
 
         #[test]
         fn test_is_nice1() {
-            assert!(is_nice(
-                "qjhvhtzxzqqjkmpb",
-                &NiceStringCheckerPart2::default()
-            ));
+            assert!(is_nice("qjhvhtzxzqqjkmpb", &CheckerPart2::default()));
         }
 
         #[test]
         fn test_is_nice2() {
-            assert!(is_nice("xxyxx", &NiceStringCheckerPart2::default()));
+            assert!(is_nice("xxyxx", &CheckerPart2::default()));
         }
 
         #[test]
         fn test_is_nice3() {
-            assert!(!is_nice(
-                "uurcxstgmygtbstg",
-                &NiceStringCheckerPart2::default()
-            ));
+            assert!(!is_nice("uurcxstgmygtbstg", &CheckerPart2::default()));
         }
 
         #[test]
         fn test_is_nice4() {
-            assert!(!is_nice(
-                "ieodomkazucvgmuy",
-                &NiceStringCheckerPart2::default()
-            ));
+            assert!(!is_nice("ieodomkazucvgmuy", &CheckerPart2::default()));
         }
 
         #[test]
         fn test_is_nice5() {
-            assert!(is_nice("xyxy", &NiceStringCheckerPart2::default()));
+            assert!(is_nice("xyxy", &CheckerPart2::default()));
         }
 
         #[test]
         fn test_is_nice6() {
-            assert!(!is_nice("aabcdefgaa", &NiceStringCheckerPart2::default()));
+            assert!(!is_nice("aabcdefgaa", &CheckerPart2::default()));
         }
 
         #[test]
         fn test_is_nice7() {
-            assert!(!is_nice("aaa", &NiceStringCheckerPart2::default()));
+            assert!(!is_nice("aaa", &CheckerPart2::default()));
         }
 
         #[test]
         fn test_is_nice8() {
-            assert!(!is_nice("xyx", &NiceStringCheckerPart2::default()));
+            assert!(!is_nice("xyx", &CheckerPart2::default()));
         }
 
         #[test]
         fn test_is_nice9() {
-            assert!(!is_nice("abcdefeghi", &NiceStringCheckerPart2::default()));
+            assert!(!is_nice("abcdefeghi", &CheckerPart2::default()));
         }
     }
 }
