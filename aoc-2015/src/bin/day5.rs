@@ -1,17 +1,21 @@
 use std::io::BufRead;
 
-use strings::is_nice;
+use nice::is_nice;
+
+use crate::nice::NiceStringCheckerPart1;
 
 fn main() -> Result<(), std::io::Error> {
     let path = std::env::args().skip(1).next().unwrap();
     let file = std::fs::File::open(path).unwrap();
     let reader = std::io::BufReader::new(file);
+
+    let checker = NiceStringCheckerPart1::default();
     let count: usize =
         reader
             .lines()
             .try_fold(0, |acc, line| -> Result<usize, std::io::Error> {
                 let line = line?;
-                if is_nice(&line) {
+                if is_nice(&line, &checker) {
                     Ok(acc + 1)
                 } else {
                     Ok(acc)
@@ -22,27 +26,26 @@ fn main() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-mod strings {
-    struct NiceStringChecker {
+mod nice {
+    pub trait NiceStringChecker {
+        fn is_nice<S: AsRef<str>>(&self, string: S) -> bool;
+    }
+
+    pub struct NiceStringCheckerPart1 {
         want_vowels: usize,
         want_double_letter: bool,
         exclude_strings: Vec<String>,
     }
 
-    impl NiceStringChecker {
-        fn new<S: Into<String>>(
-            want_vowels: usize,
-            want_double_letter: bool,
-            excluded_strings: Vec<S>,
-        ) -> Self {
-            Self {
-                want_vowels,
-                want_double_letter,
-                exclude_strings: excluded_strings.into_iter().map(|s| s.into()).collect(),
-            }
+    impl Default for NiceStringCheckerPart1 {
+        fn default() -> Self {
+            Self::new(3, true, vec!["ab", "cd", "pq", "xy"])
         }
+    }
 
-        fn is_nice(&self, string: &str) -> bool {
+    impl NiceStringChecker for NiceStringCheckerPart1 {
+        fn is_nice<S: AsRef<str>>(&self, string: S) -> bool {
+            let string = string.as_ref();
             if Self::has_vowels(string) < self.want_vowels {
                 return false;
             }
@@ -53,6 +56,20 @@ mod strings {
                 return false;
             }
             true
+        }
+    }
+
+    impl NiceStringCheckerPart1 {
+        fn new<S: Into<String>>(
+            want_vowels: usize,
+            want_double_letter: bool,
+            excluded_strings: Vec<S>,
+        ) -> Self {
+            Self {
+                want_vowels,
+                want_double_letter,
+                exclude_strings: excluded_strings.into_iter().map(|s| s.into()).collect(),
+            }
         }
 
         fn has_double_letter(string: &str) -> bool {
@@ -77,35 +94,49 @@ mod strings {
         }
     }
 
-    pub fn is_nice(s: &str) -> bool {
-        NiceStringChecker::new(3, true, vec!["ab", "cd", "pq", "xy"]).is_nice(s)
+    pub fn is_nice(s: &str, checker: &impl NiceStringChecker) -> bool {
+        checker.is_nice(s)
     }
 
     #[cfg(test)]
     mod tests_is_nice {
+        use super::*;
+
         #[test]
         fn test_is_nice1() {
-            assert!(super::is_nice("ugknbfddgicrmopn"));
+            assert!(is_nice(
+                "ugknbfddgicrmopn",
+                &NiceStringCheckerPart1::default()
+            ));
         }
 
         #[test]
         fn test_is_nice2() {
-            assert!(super::is_nice("aaa"));
+            assert!(is_nice("aaa", &NiceStringCheckerPart1::default()));
         }
 
         #[test]
         fn test_is_nice3() {
-            assert!(!super::is_nice("jchzalrnumimnmhp"));
+            assert!(!is_nice(
+                "jchzalrnumimnmhp",
+                &NiceStringCheckerPart1::default()
+            ));
         }
 
         #[test]
         fn test_is_nice4() {
-            assert!(!super::is_nice("haegwjzuvuyypxyu"));
+            assert!(!is_nice(
+                "haegwjzuvuyypxyu",
+                &NiceStringCheckerPart1::default()
+            ));
         }
 
         #[test]
         fn test_is_nice5() {
-            assert!(!super::is_nice("dvszwmarrgswjxmb"));
+            assert!(!is_nice(
+                "dvszwmarrgswjxmb",
+                &NiceStringCheckerPart1::default()
+            ));
         }
     }
 }
