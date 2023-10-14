@@ -160,27 +160,27 @@ mod nice {
 
         #[test]
         fn test_is_nice1() {
-            assert!("ugknbfddgicrmopn".is_nice(&checker()));
+            assert_eq!("ugknbfddgicrmopn".is_nice(&checker()), true);
         }
 
         #[test]
         fn test_is_nice2() {
-            assert!("aaa".is_nice(&checker()));
+            assert_eq!("aaa".is_nice(&checker()), true);
         }
 
         #[test]
         fn test_is_nice3() {
-            assert!(!"jchzalrnumimnmhp".is_nice(&checker()));
+            assert_eq!("jchzalrnumimnmhp".is_nice(&checker()), false);
         }
 
         #[test]
         fn test_is_nice4() {
-            assert!(!"haegwjzuvuyypxyu".is_nice(&checker()));
+            assert_eq!("haegwjzuvuyypxyu".is_nice(&checker()), false);
         }
 
         #[test]
         fn test_is_nice5() {
-            assert!(!"dvszwmarrgswjxmb".is_nice(&checker()));
+            assert_eq!("dvszwmarrgswjxmb".is_nice(&checker()), false);
         }
     }
 
@@ -194,47 +194,47 @@ mod nice {
 
         #[test]
         fn test_is_nice1() {
-            assert!("qjhvhtzxzqqjkmpb".is_nice(&checker()));
+            assert_eq!("qjhvhtzxzqqjkmpb".is_nice(&checker()), true);
         }
 
         #[test]
         fn test_is_nice2() {
-            assert!("xxyxx".is_nice(&checker()));
+            assert_eq!("xxyxx".is_nice(&checker()), true);
         }
 
         #[test]
         fn test_is_nice3() {
-            assert!(!"uurcxstgmygtbstg".is_nice(&checker()));
+            assert_eq!("uurcxstgmygtbstg".is_nice(&checker()), false);
         }
 
         #[test]
         fn test_is_nice4() {
-            assert!(!"ieodomkazucvgmuy".is_nice(&checker()));
+            assert_eq!("ieodomkazucvgmuy".is_nice(&checker()), false);
         }
 
         #[test]
         fn test_is_nice5() {
-            assert!("xyxy".is_nice(&checker()));
+            assert_eq!("xyxy".is_nice(&checker()), true);
         }
 
         #[test]
         fn test_is_nice6() {
-            assert!(!"aabcdefgaa".is_nice(&checker()));
+            assert_eq!("aabcdefgaa".is_nice(&checker()), false);
         }
 
         #[test]
         fn test_is_nice7() {
-            assert!(!"aaa".is_nice(&checker()));
+            assert_eq!("aaa".is_nice(&checker()), false);
         }
 
         #[test]
         fn test_is_nice8() {
-            assert!(!"xyx".is_nice(&checker()));
+            assert_eq!("xyx".is_nice(&checker()), false);
         }
 
         #[test]
         fn test_is_nice9() {
-            assert!(!"abcdefeghi".is_nice(&checker()));
+            assert_eq!("abcdefeghi".is_nice(&checker()), false);
         }
     }
 }
