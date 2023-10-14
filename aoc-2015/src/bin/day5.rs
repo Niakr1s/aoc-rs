@@ -1,6 +1,6 @@
 use std::io::BufRead;
 
-use nice::Checker;
+use nice::{Check, Checker};
 
 use crate::nice::{CheckerPart1, CheckerPart2};
 
@@ -25,7 +25,7 @@ fn main() -> Result<(), std::io::Error> {
 }
 
 fn run(lines: &Vec<String>, checker: &impl Checker) -> usize {
-    lines.iter().filter(|line| checker.is_nice(line)).count()
+    lines.iter().filter(|line| line.is_nice(checker)).count()
 }
 
 mod nice {
@@ -33,6 +33,16 @@ mod nice {
 
     pub trait Checker {
         fn is_nice<S: AsRef<str>>(&self, string: S) -> bool;
+    }
+
+    pub trait Check {
+        fn is_nice(&self, checker: &impl Checker) -> bool;
+    }
+
+    impl<T: AsRef<str>> Check for T {
+        fn is_nice(&self, checker: &impl Checker) -> bool {
+            checker.is_nice(self)
+        }
     }
 
     pub struct CheckerPart1 {
@@ -140,37 +150,37 @@ mod nice {
         }
     }
 
-    pub fn is_nice(s: &str, checker: &impl Checker) -> bool {
-        checker.is_nice(s)
-    }
-
     #[cfg(test)]
     mod tests_checker_part1 {
         use super::*;
 
+        fn checker() -> CheckerPart1 {
+            CheckerPart1::default()
+        }
+
         #[test]
         fn test_is_nice1() {
-            assert!(is_nice("ugknbfddgicrmopn", &CheckerPart1::default()));
+            assert!("ugknbfddgicrmopn".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice2() {
-            assert!(is_nice("aaa", &CheckerPart1::default()));
+            assert!("aaa".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice3() {
-            assert!(!is_nice("jchzalrnumimnmhp", &CheckerPart1::default()));
+            assert!(!"jchzalrnumimnmhp".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice4() {
-            assert!(!is_nice("haegwjzuvuyypxyu", &CheckerPart1::default()));
+            assert!(!"haegwjzuvuyypxyu".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice5() {
-            assert!(!is_nice("dvszwmarrgswjxmb", &CheckerPart1::default()));
+            assert!(!"dvszwmarrgswjxmb".is_nice(&checker()));
         }
     }
 
@@ -178,49 +188,53 @@ mod nice {
     mod tests_checker_part2 {
         use super::*;
 
+        fn checker() -> CheckerPart2 {
+            CheckerPart2::default()
+        }
+
         #[test]
         fn test_is_nice1() {
-            assert!(is_nice("qjhvhtzxzqqjkmpb", &CheckerPart2::default()));
+            assert!("qjhvhtzxzqqjkmpb".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice2() {
-            assert!(is_nice("xxyxx", &CheckerPart2::default()));
+            assert!("xxyxx".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice3() {
-            assert!(!is_nice("uurcxstgmygtbstg", &CheckerPart2::default()));
+            assert!(!"uurcxstgmygtbstg".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice4() {
-            assert!(!is_nice("ieodomkazucvgmuy", &CheckerPart2::default()));
+            assert!(!"ieodomkazucvgmuy".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice5() {
-            assert!(is_nice("xyxy", &CheckerPart2::default()));
+            assert!("xyxy".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice6() {
-            assert!(!is_nice("aabcdefgaa", &CheckerPart2::default()));
+            assert!(!"aabcdefgaa".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice7() {
-            assert!(!is_nice("aaa", &CheckerPart2::default()));
+            assert!(!"aaa".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice8() {
-            assert!(!is_nice("xyx", &CheckerPart2::default()));
+            assert!(!"xyx".is_nice(&checker()));
         }
 
         #[test]
         fn test_is_nice9() {
-            assert!(!is_nice("abcdefeghi", &CheckerPart2::default()));
+            assert!(!"abcdefeghi".is_nice(&checker()));
         }
     }
 }
