@@ -175,7 +175,7 @@ mod lib {
 
     #[derive(Debug)]
     pub enum GridError {
-        InvalidInstruction(Instruction),
+        InvalidRect(Rectangle),
     }
 
     #[derive(Debug, Clone, Copy, PartialEq)]
@@ -200,7 +200,7 @@ mod lib {
         pub fn apply_cmd(&mut self, cmd: &Command) -> Result<(), GridError> {
             if !cmd.rect.is_valid() {
                 println!("Invalid rect: {:?}", cmd.rect);
-                return Err(GridError::InvalidInstruction(cmd.instruction));
+                return Err(GridError::InvalidRect(cmd.rect));
             }
             match cmd.instruction {
                 Instruction::TurnOn => self.turn_on(&cmd.rect),
