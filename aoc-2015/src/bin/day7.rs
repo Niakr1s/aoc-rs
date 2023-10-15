@@ -17,7 +17,7 @@ fn main() -> Result<(), error::Error> {
         let cmd: Cmd = dbg!(line.parse()?);
         _ = pool.apply_cmd(&cmd);
     }
-    println!("Part1: contents of x is {}", pool.get(&"x".into()).unwrap());
+    println!("Part1: contents of x is {}", pool.get(&"a".into()).unwrap());
 
     Ok(())
 }
@@ -108,6 +108,7 @@ mod lib {
 
     #[derive(Debug, PartialEq)]
     enum Op {
+        Gate(Gate),
         Number(Number),
         Unary(UnaryOp),
         Binary(BinaryOp),
@@ -224,6 +225,9 @@ mod lib {
     impl Op {
         fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
             let res = match self {
+                Op::Gate(gate) => *pool
+                    .get(gate)
+                    .ok_or(ComputeError::GateNotFound(gate.clone()))?,
                 Op::Number(num) => num.compute(),
                 Op::Unary(op) => op.compute(pool)?,
                 Op::Binary(op) => op.compute(pool)?,
@@ -275,7 +279,13 @@ mod lib {
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let split = s.trim().split_whitespace().collect::<Vec<_>>();
             let op = match split.len() {
-                1 => Op::Number(s.parse()?),
+                1 => {
+                    let n = s.parse::<Number>();
+                    match n {
+                        Ok(num) => Op::Number(num),
+                        Err(_) => Op::Gate(s.parse::<Gate>()?),
+                    }
+                }
                 2 => Op::Unary(s.parse()?),
                 3 => {
                     let last = *split.last().unwrap();
