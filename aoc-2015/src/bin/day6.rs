@@ -125,11 +125,12 @@ mod lib {
 
     impl Rectangle {
         /// Returns true if the rectangle is inside the grid,
-        /// not zero-sized and end is at top-rignt of start.
+        /// end is at top-rignt of start (can be at same line).
+        /// Can be zero-sized.
         pub fn is_valid(&self) -> bool {
             self.start.is_inside_grid()
                 && self.end.is_inside_grid()
-                && self.end.is_top_right_of(&self.start)
+                && (self.end.is_top_right_of(&self.start) || self.start == self.end)
         }
     }
 
@@ -413,13 +414,18 @@ mod lib {
                 }
 
                 #[test]
-                fn test_invalid_1() {
-                    test!((0, 0), (0, 0) => false);
+                fn test_zero_1() {
+                    test!((0, 0), (0, 0) => true);
                 }
 
                 #[test]
-                fn test_invalid_2() {
-                    test!((5, 5), (5, 5) => false);
+                fn test_zero_2() {
+                    test!((5, 5), (5, 5) => true);
+                }
+
+                #[test]
+                fn test_zero_3() {
+                    test!((LAST, LAST), (LAST, LAST) => true);
                 }
 
                 #[test]
@@ -435,11 +441,6 @@ mod lib {
                 #[test]
                 fn test_invalid_5() {
                     test!((5, 5), (4, 6) => false);
-                }
-
-                #[test]
-                fn test_invalid_6() {
-                    test!((LAST, LAST), (LAST, LAST) => false);
                 }
 
                 #[test]
