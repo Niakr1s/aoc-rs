@@ -1,6 +1,6 @@
-use std::{io::BufRead, path::PathBuf, str::FromStr};
+use std::{io::BufRead, path::PathBuf};
 
-use lib::{Command, Grid};
+use lib::{Command, Grid, GridCell};
 
 fn main() -> Result<(), error::Error> {
     let filepath: PathBuf = std::env::args()
@@ -18,6 +18,8 @@ fn main() -> Result<(), error::Error> {
     {
         grid.apply_cmd(&cmd?)?;
     }
+    let lit_cells = grid.count(&GridCell(true));
+    println!("Lit cells: {}", lit_cells);
     Ok(())
 }
 
@@ -175,7 +177,7 @@ mod lib {
     }
 
     #[derive(Debug, Clone, Copy, PartialEq)]
-    pub struct GridCell(bool);
+    pub struct GridCell(pub bool);
 
     pub struct Grid([[GridCell; GRID_SZ]; GRID_SZ]);
 
