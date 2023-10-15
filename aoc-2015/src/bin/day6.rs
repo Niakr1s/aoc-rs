@@ -53,8 +53,13 @@ mod error {
 mod lib {
     use std::{num::ParseIntError, str::FromStr};
 
+    #[allow(dead_code)]
     const GRID_SZ: usize = 1000;
+
+    #[allow(dead_code)]
     const FIRST: usize = 0;
+
+    #[allow(dead_code)]
     const LAST: usize = GRID_SZ - 1;
 
     #[derive(Debug)]
