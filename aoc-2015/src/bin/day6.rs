@@ -183,6 +183,13 @@ mod lib {
         pub fn new() -> Self {
             Self([[GridCell(false); GRID_SZ]; GRID_SZ])
         }
+
+        pub fn count(&self, want: &GridCell) -> usize {
+            self.0
+                .iter()
+                .map(|row| row.iter().filter(|&cell| cell == want).count())
+                .sum()
+        }
     }
 
     impl Grid {
@@ -238,6 +245,17 @@ mod lib {
 
             const GRID_EMPTY: [[GridCell; GRID_SZ]; GRID_SZ] =
                 [[GridCell(false); GRID_SZ]; GRID_SZ];
+
+            mod count {
+                use crate::lib::{Grid, GridCell, GRID_SZ};
+
+                #[test]
+                fn test_count() {
+                    let grid = Grid::new();
+                    assert_eq!(grid.count(&GridCell(false)), GRID_SZ * GRID_SZ);
+                    assert_eq!(grid.count(&GridCell(true)), 0);
+                }
+            }
 
             mod new {
                 use crate::lib::{tests::grid::GRID_EMPTY, Grid};
