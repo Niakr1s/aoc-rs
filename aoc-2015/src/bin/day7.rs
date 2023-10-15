@@ -1,4 +1,55 @@
-fn main() {}
+use std::{io::BufRead, path::PathBuf};
+
+use lib::Cmd;
+
+fn main() -> Result<(), error::Error> {
+    let filepath: PathBuf = std::env::args()
+        .skip(1)
+        .next()
+        .expect("Provide a file path as first argument")
+        .into();
+    let file = std::fs::File::open(filepath)?;
+    let reader = std::io::BufReader::new(file);
+
+    let mut pool = lib::GatePool::new();
+    for line in reader.lines() {
+        let line = line?;
+        let cmd: Cmd = dbg!(line.parse()?);
+        _ = pool.apply_cmd(&cmd);
+    }
+    println!("Part1: contents of x is {}", pool.get(&"x".into()).unwrap());
+
+    Ok(())
+}
+
+mod error {
+    use crate::lib;
+
+    #[derive(Debug)]
+    pub enum Error {
+        Io(std::io::Error),
+        Parse(lib::ParseError),
+        Compute(lib::ComputeError),
+    }
+
+    impl From<std::io::Error> for Error {
+        fn from(e: std::io::Error) -> Self {
+            Error::Io(e)
+        }
+    }
+
+    impl From<lib::ParseError> for Error {
+        fn from(e: lib::ParseError) -> Self {
+            Error::Parse(e)
+        }
+    }
+
+    impl From<lib::ComputeError> for Error {
+        fn from(e: lib::ComputeError) -> Self {
+            Error::Compute(e)
+        }
+    }
+}
 
 mod lib {
     use std::{collections::HashMap, num::ParseIntError, str::FromStr};
@@ -41,6 +92,7 @@ mod lib {
         }
     }
 
+    #[derive(Debug)]
     pub struct Cmd {
         op: Op,
         target: Gate,
