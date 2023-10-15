@@ -53,6 +53,8 @@ mod error {
 mod lib {
     use std::{num::ParseIntError, str::FromStr};
 
+    const GRID_SIZE: usize = 1000;
+
     #[derive(Debug)]
     pub enum FromStrError {
         ParseError,
@@ -105,19 +107,26 @@ mod lib {
         }
     }
 
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct Command {
-        pub instruction: Instruction,
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    pub struct Rectangle {
         pub start: Point,
         pub end: Point,
     }
 
-    impl Command {
+    impl Rectangle {
+        /// Returns true if the rectangle is inside the grid,
+        /// not zero-sized and end is at top-rignt of start.
         pub fn is_valid(&self) -> bool {
             self.start.is_inside_grid()
                 && self.end.is_inside_grid()
                 && self.end.is_top_right_of(&self.start)
         }
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    pub struct Command {
+        pub instruction: Instruction,
+        pub rect: Rectangle,
     }
 
     impl FromStr for Command {
@@ -144,16 +153,14 @@ mod lib {
                 split[4].parse::<usize>()?,
                 split[5].parse::<usize>()?,
             );
-
-            Ok(Command {
-                instruction,
+            let rect = Rectangle {
                 start: Point { x: sx, y: sy },
                 end: Point { x: ex, y: ey },
-            })
+            };
+
+            Ok(Command { instruction, rect })
         }
     }
-
-    const GRID_SIZE: usize = 1000;
 
     #[derive(Debug)]
     pub enum GridError {
@@ -170,7 +177,7 @@ mod lib {
 
     impl Grid {
         pub fn apply_cmd(&mut self, cmd: &Command) -> Result<(), GridError> {
-            if !cmd.is_valid() {
+            if !cmd.rect.is_valid() {
                 return Err(GridError::InvalidInstruction(cmd.instruction));
             }
             match cmd.instruction {
@@ -234,17 +241,16 @@ mod lib {
             }
         }
 
-        mod command {
+        mod rectangle {
             mod is_valid {
-                use crate::lib::{Command, Instruction, Point, GRID_SIZE};
+                use crate::lib::{Point, Rectangle, GRID_SIZE};
 
                 const LAST: usize = GRID_SIZE - 1;
 
                 macro_rules! test {
                     (($sx:expr, $sy:expr), ($ex:expr, $ey:expr) => $wanted:expr) => {
                         assert_eq!(
-                            Command {
-                                instruction: Instruction::Toggle,
+                            Rectangle {
                                 start: Point { x: $sx, y: $sy },
                                 end: Point { x: $ex, y: $ey }
                             }
@@ -304,10 +310,13 @@ mod lib {
                     test!((GRID_SIZE, GRID_SIZE), (GRID_SIZE+1, GRID_SIZE+1) => false);
                 }
             }
+        }
+
+        mod command {
 
             mod from_str {
 
-                use crate::lib::{Command, Instruction, Point};
+                use crate::lib::{Command, Instruction, Point, Rectangle};
 
                 #[test]
                 fn test_on() {
@@ -315,8 +324,10 @@ mod lib {
                         "turn on 171,630 through 656,769".parse::<Command>().ok(),
                         Some(Command {
                             instruction: Instruction::TurnOn,
-                            start: Point { x: 171, y: 630 },
-                            end: Point { x: 656, y: 769 },
+                            rect: Rectangle {
+                                start: Point { x: 171, y: 630 },
+                                end: Point { x: 656, y: 769 },
+                            }
                         })
                     );
                 }
@@ -327,8 +338,10 @@ mod lib {
                         "turn off 417,276 through 751,500".parse::<Command>().ok(),
                         Some(Command {
                             instruction: Instruction::TurnOff,
-                            start: Point { x: 417, y: 276 },
-                            end: Point { x: 751, y: 500 },
+                            rect: Rectangle {
+                                start: Point { x: 417, y: 276 },
+                                end: Point { x: 751, y: 500 },
+                            }
                         })
                     );
                 }
@@ -339,8 +352,10 @@ mod lib {
                         "toggle 559,485 through 584,534".parse::<Command>().ok(),
                         Some(Command {
                             instruction: Instruction::Toggle,
-                            start: Point { x: 559, y: 485 },
-                            end: Point { x: 584, y: 534 },
+                            rect: Rectangle {
+                                start: Point { x: 559, y: 485 },
+                                end: Point { x: 584, y: 534 },
+                            }
                         })
                     );
                 }
