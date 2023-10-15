@@ -111,8 +111,9 @@ mod lib {
         }
 
         /// Returns true if `of` is on the top right of `this`.
+        /// Can be at the same line.
         pub fn is_top_right_of(&self, other: &Point) -> bool {
-            self.x > other.x && self.y > other.y
+            self.x >= other.x && self.y >= other.y && self != other
         }
     }
 
@@ -389,6 +390,26 @@ mod lib {
                 #[test]
                 fn test_eq_3() {
                     test!((LAST-1, LAST-1), (LAST, LAST) => true);
+                }
+
+                #[test]
+                fn test_line_1() {
+                    test!((3, 3), (4, 3) => true);
+                }
+
+                #[test]
+                fn test_line_2() {
+                    test!((3, 3), (3, 4) => true);
+                }
+
+                #[test]
+                fn test_line_invalie_1() {
+                    test!((3, 3), (3, 2) => false);
+                }
+
+                #[test]
+                fn test_line_invalid_2() {
+                    test!((3, 3), (2, 3) => false);
                 }
 
                 #[test]
