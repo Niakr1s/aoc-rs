@@ -247,9 +247,14 @@ mod lib {
 
         #[cfg(test)]
         mod tests {
+            use super::*;
+
             mod grid {
+                use super::*;
+
                 mod count {
-                    use crate::lib::grid_part1::{Grid, GridCell, GRID_SZ};
+                    use super::*;
+                    use crate::lib::GRID_SZ;
 
                     #[test]
                     fn test_count() {
@@ -270,9 +275,159 @@ mod lib {
                 }
 
                 mod apply_cmd {
-                    use crate::lib::grid_part1::{
-                        Command, Grid, GridCell, Instruction, Point, Rectangle, FIRST, LAST,
-                    };
+                    use super::*;
+                    use crate::lib::{FIRST, LAST};
+
+                    #[test]
+                    fn test_turn_on() {
+                        let mut grid = Grid::new();
+                        let cmd = Command {
+                            instruction: Instruction::TurnOn,
+                            rect: Rectangle {
+                                start: Point { x: FIRST, y: FIRST },
+                                end: Point { x: LAST, y: LAST },
+                            },
+                        };
+                        grid.apply_cmd(&cmd).unwrap();
+                        assert_eq!(grid.count(&GridCell(false)), 0);
+                    }
+
+                    #[test]
+                    fn test_turn_off() {
+                        let mut grid = Grid::new();
+                        let cmd = Command {
+                            instruction: Instruction::TurnOn,
+                            rect: Rectangle {
+                                start: Point { x: FIRST, y: FIRST },
+                                end: Point { x: LAST, y: LAST },
+                            },
+                        };
+                        grid.apply_cmd(&cmd).unwrap();
+                        let cmd = Command {
+                            instruction: Instruction::TurnOff,
+                            ..cmd
+                        };
+                        grid.apply_cmd(&cmd).unwrap();
+                        assert_eq!(grid.count(&GridCell(true)), 0);
+                    }
+
+                    #[test]
+                    fn test_toggle() {
+                        let mut grid = Grid::new();
+                        let cmd = Command {
+                            instruction: Instruction::Toggle,
+                            rect: Rectangle {
+                                start: Point { x: FIRST, y: FIRST },
+                                end: Point { x: LAST, y: LAST },
+                            },
+                        };
+                        grid.apply_cmd(&cmd).unwrap();
+                        assert_eq!(grid.count(&GridCell(false)), 0);
+                        grid.apply_cmd(&cmd).unwrap();
+                        assert_eq!(grid.count(&GridCell(true)), 0);
+                    }
+                }
+            }
+        }
+    }
+
+    pub mod grid_part2 {
+        use super::*;
+
+        #[derive(Debug, Clone, Copy, PartialEq)]
+        pub struct GridCell(pub bool);
+
+        pub struct Grid(Box<[[GridCell; GRID_SZ]; GRID_SZ]>);
+
+        impl Grid {
+            pub fn new() -> Self {
+                Self(Box::new([[GridCell(false); GRID_SZ]; GRID_SZ]))
+            }
+
+            pub fn count(&self, want: &GridCell) -> usize {
+                self.0
+                    .iter()
+                    .map(|row| row.iter().filter(|&cell| cell == want).count())
+                    .sum()
+            }
+        }
+
+        impl Grid {
+            pub fn apply_cmd(&mut self, cmd: &Command) -> Result<(), GridError> {
+                if !cmd.rect.is_valid() {
+                    println!("Invalid rect: {:?}", cmd.rect);
+                    return Err(GridError::InvalidRect(cmd.rect));
+                }
+                match cmd.instruction {
+                    Instruction::TurnOn => self.turn_on(&cmd.rect),
+                    Instruction::TurnOff => self.turn_off(&cmd.rect),
+                    Instruction::Toggle => self.toggle(&cmd.rect),
+                }
+                Ok(())
+            }
+
+            /// Attention: valid rect should be provided.
+            fn turn_on(&mut self, rect: &Rectangle) {
+                for y in rect.start.y..=rect.end.y {
+                    for x in rect.start.x..=rect.end.x {
+                        self.0[y][x] = GridCell(true);
+                    }
+                }
+            }
+
+            /// Attention: valid rect should be provided.
+            fn turn_off(&mut self, rect: &Rectangle) {
+                for y in rect.start.y..=rect.end.y {
+                    for x in rect.start.x..=rect.end.x {
+                        self.0[y][x] = GridCell(false);
+                    }
+                }
+            }
+
+            /// Attention: valid rect should be provided.
+            fn toggle(&mut self, rect: &Rectangle) {
+                for y in rect.start.y..=rect.end.y {
+                    for x in rect.start.x..=rect.end.x {
+                        let cell = self.0[y][x];
+                        let toggled = GridCell(!cell.0);
+                        self.0[y][x] = toggled;
+                    }
+                }
+            }
+        }
+
+        #[cfg(test)]
+        mod tests {
+            use super::*;
+
+            mod grid {
+                use super::*;
+
+                mod count {
+                    use super::*;
+                    use crate::lib::GRID_SZ;
+
+                    #[test]
+                    fn test_count() {
+                        let grid = Grid::new();
+                        assert_eq!(grid.count(&GridCell(false)), GRID_SZ * GRID_SZ);
+                        assert_eq!(grid.count(&GridCell(true)), 0);
+                    }
+                }
+
+                mod new {
+                    use super::*;
+
+                    #[test]
+                    fn test_new() {
+                        let grid = Grid::new();
+                        assert_eq!(grid.count(&GridCell(true)), 0);
+                    }
+                }
+
+                mod apply_cmd {
+                    use super::*;
+                    use crate::lib::{FIRST, LAST};
 
                     #[test]
                     fn test_turn_on() {
