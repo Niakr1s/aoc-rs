@@ -186,11 +186,11 @@ mod lib {
         #[derive(Debug, Clone, Copy, PartialEq)]
         pub struct GridCell(pub bool);
 
-        pub struct Grid(Box<[[GridCell; GRID_SZ]; GRID_SZ]>);
+        pub struct Grid(Vec<Vec<GridCell>>);
 
         impl Grid {
             pub fn new() -> Self {
-                Self(Box::new([[GridCell(false); GRID_SZ]; GRID_SZ]))
+                Self(vec![vec![GridCell(false); GRID_SZ]; GRID_SZ])
             }
 
             pub fn count(&self, want: &GridCell) -> usize {
@@ -332,6 +332,8 @@ mod lib {
     }
 
     pub mod grid_part2 {
+        use std::vec;
+
         use super::*;
 
         #[derive(Debug, Clone, Copy, PartialEq)]
@@ -351,11 +353,11 @@ mod lib {
             }
         }
 
-        pub struct Grid(Box<[[GridCell; GRID_SZ]; GRID_SZ]>);
+        pub struct Grid(Vec<Vec<GridCell>>);
 
         impl Grid {
             pub fn new() -> Self {
-                Self(Box::new([[GridCell(0); GRID_SZ]; GRID_SZ]))
+                Self(vec![vec![GridCell(0); GRID_SZ]; GRID_SZ])
             }
 
             pub fn total_brightness(&self) -> usize {
