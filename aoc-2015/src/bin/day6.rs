@@ -167,11 +167,14 @@ mod lib {
         InvalidInstruction(Instruction),
     }
 
-    pub struct Grid([[Instruction; GRID_SZ]; GRID_SZ]);
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    pub struct GridCell(bool);
+
+    pub struct Grid([[GridCell; GRID_SZ]; GRID_SZ]);
 
     impl Grid {
         pub fn new() -> Self {
-            Self([[Instruction::TurnOff; GRID_SZ]; GRID_SZ])
+            Self([[GridCell(false); GRID_SZ]; GRID_SZ])
         }
     }
 
@@ -181,22 +184,40 @@ mod lib {
                 return Err(GridError::InvalidInstruction(cmd.instruction));
             }
             match cmd.instruction {
-                Instruction::TurnOn => todo!(),
-                Instruction::TurnOff => todo!(),
-                Instruction::Toggle => todo!(),
+                Instruction::TurnOn => self.turn_on(&cmd.rect),
+                Instruction::TurnOff => self.turn_off(&cmd.rect),
+                Instruction::Toggle => self.toggle(&cmd.rect),
+            }
+            Ok(())
+        }
+
+        /// Attention: valid rect should be provided.
+        fn turn_on(&mut self, rect: &Rectangle) {
+            for y in rect.start.y..=rect.end.y {
+                for x in rect.start.x..=rect.end.x {
+                    self.0[y][x] = GridCell(true);
+                }
             }
         }
-    }
 
-    impl AsRef<[[Instruction; GRID_SZ]; GRID_SZ]> for Grid {
-        fn as_ref(&self) -> &[[Instruction; GRID_SZ]; GRID_SZ] {
-            &self.0
+        /// Attention: valid rect should be provided.
+        fn turn_off(&mut self, rect: &Rectangle) {
+            for y in rect.start.y..=rect.end.y {
+                for x in rect.start.x..=rect.end.x {
+                    self.0[y][x] = GridCell(false);
+                }
+            }
         }
-    }
 
-    impl AsMut<[[Instruction; GRID_SZ]; GRID_SZ]> for Grid {
-        fn as_mut(&mut self) -> &mut [[Instruction; GRID_SZ]; GRID_SZ] {
-            &mut self.0
+        /// Attention: valid rect should be provided.
+        fn toggle(&mut self, rect: &Rectangle) {
+            for y in rect.start.y..=rect.end.y {
+                for x in rect.start.x..=rect.end.x {
+                    let cell = self.0[y][x];
+                    let toggled = GridCell(!cell.0);
+                    self.0[y][x] = toggled;
+                }
+            }
         }
     }
 
