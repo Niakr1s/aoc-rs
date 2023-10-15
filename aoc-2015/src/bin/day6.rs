@@ -53,7 +53,7 @@ mod error {
 mod lib {
     use std::{num::ParseIntError, str::FromStr};
 
-    const GRID_SIZE: usize = 1000;
+    const GRID_SZ: usize = 1000;
 
     #[derive(Debug)]
     pub enum FromStrError {
@@ -98,7 +98,7 @@ mod lib {
 
     impl Point {
         pub fn is_inside_grid(&self) -> bool {
-            self.x < GRID_SIZE && self.y < GRID_SIZE
+            self.x < GRID_SZ && self.y < GRID_SZ
         }
 
         /// Returns true if `of` is on the top right of `this`.
@@ -167,11 +167,11 @@ mod lib {
         InvalidInstruction(Instruction),
     }
 
-    pub struct Grid([[Instruction; GRID_SIZE]; GRID_SIZE]);
+    pub struct Grid([[Instruction; GRID_SZ]; GRID_SZ]);
 
     impl Grid {
         pub fn new() -> Self {
-            Self([[Instruction::TurnOff; GRID_SIZE]; GRID_SIZE])
+            Self([[Instruction::TurnOff; GRID_SZ]; GRID_SZ])
         }
     }
 
@@ -188,14 +188,14 @@ mod lib {
         }
     }
 
-    impl AsRef<[[Instruction; GRID_SIZE]; GRID_SIZE]> for Grid {
-        fn as_ref(&self) -> &[[Instruction; GRID_SIZE]; GRID_SIZE] {
+    impl AsRef<[[Instruction; GRID_SZ]; GRID_SZ]> for Grid {
+        fn as_ref(&self) -> &[[Instruction; GRID_SZ]; GRID_SZ] {
             &self.0
         }
     }
 
-    impl AsMut<[[Instruction; GRID_SIZE]; GRID_SIZE]> for Grid {
-        fn as_mut(&mut self) -> &mut [[Instruction; GRID_SIZE]; GRID_SIZE] {
+    impl AsMut<[[Instruction; GRID_SZ]; GRID_SZ]> for Grid {
+        fn as_mut(&mut self) -> &mut [[Instruction; GRID_SZ]; GRID_SZ] {
             &mut self.0
         }
     }
@@ -243,9 +243,9 @@ mod lib {
 
         mod rectangle {
             mod is_valid {
-                use crate::lib::{Point, Rectangle, GRID_SIZE};
+                use crate::lib::{Point, Rectangle, GRID_SZ};
 
-                const LAST: usize = GRID_SIZE - 1;
+                const LAST: usize = GRID_SZ - 1;
 
                 macro_rules! test {
                     (($sx:expr, $sy:expr), ($ex:expr, $ey:expr) => $wanted:expr) => {
@@ -307,7 +307,7 @@ mod lib {
 
                 #[test]
                 fn test_invalid_7() {
-                    test!((GRID_SIZE, GRID_SIZE), (GRID_SIZE+1, GRID_SIZE+1) => false);
+                    test!((GRID_SZ, GRID_SZ), (GRID_SZ+1, GRID_SZ+1) => false);
                 }
             }
         }
