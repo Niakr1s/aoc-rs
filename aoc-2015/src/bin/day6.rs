@@ -223,6 +223,82 @@ mod lib {
 
     #[cfg(test)]
     mod tests {
+        mod grid {
+            use crate::lib::{GridCell, GRID_SZ};
+
+            const GRID_FILLED: [[GridCell; GRID_SZ]; GRID_SZ] =
+                [[GridCell(true); GRID_SZ]; GRID_SZ];
+
+            const GRID_EMPTY: [[GridCell; GRID_SZ]; GRID_SZ] =
+                [[GridCell(false); GRID_SZ]; GRID_SZ];
+
+            mod new {
+                use crate::lib::{tests::grid::GRID_EMPTY, Grid};
+
+                #[test]
+                fn test_new() {
+                    let grid = Grid::new();
+                    assert_eq!(grid.0, GRID_EMPTY);
+                }
+            }
+
+            mod apply_cmd {
+                use crate::lib::{
+                    tests::grid::{GRID_EMPTY, GRID_FILLED},
+                    Command, Grid, Instruction, Point, Rectangle,
+                };
+
+                #[test]
+                fn test_turn_on() {
+                    let mut grid = Grid::new();
+                    let cmd = Command {
+                        instruction: Instruction::TurnOn,
+                        rect: Rectangle {
+                            start: Point { x: 0, y: 0 },
+                            end: Point { x: 999, y: 999 },
+                        },
+                    };
+                    grid.apply_cmd(&cmd).unwrap();
+                    assert_eq!(grid.0, GRID_FILLED);
+                }
+
+                #[test]
+                fn test_turn_off() {
+                    let mut grid = Grid::new();
+                    let cmd = Command {
+                        instruction: Instruction::TurnOn,
+                        rect: Rectangle {
+                            start: Point { x: 0, y: 0 },
+                            end: Point { x: 999, y: 999 },
+                        },
+                    };
+                    grid.apply_cmd(&cmd).unwrap();
+                    let cmd = Command {
+                        instruction: Instruction::TurnOff,
+                        ..cmd
+                    };
+                    grid.apply_cmd(&cmd).unwrap();
+                    assert_eq!(grid.0, GRID_EMPTY);
+                }
+
+                #[test]
+                fn test_toggle() {
+                    let mut grid = Grid::new();
+                    let cmd = Command {
+                        instruction: Instruction::Toggle,
+                        rect: Rectangle {
+                            start: Point { x: 0, y: 0 },
+                            end: Point { x: 999, y: 999 },
+                        },
+                    };
+                    grid.apply_cmd(&cmd).unwrap();
+                    assert_eq!(grid.0, GRID_FILLED);
+                    grid.apply_cmd(&cmd).unwrap();
+                    assert_eq!(grid.0, GRID_EMPTY);
+                }
+            }
+        }
+
         mod instruction {
             mod from_str {
                 use crate::lib::Instruction;
