@@ -186,6 +186,16 @@ mod lib {
         #[derive(Debug, Clone, Copy, PartialEq)]
         pub struct GridCell(pub bool);
 
+        impl GridCell {
+            pub fn apply_instruction(&mut self, instruction: &Instruction) {
+                match instruction {
+                    Instruction::TurnOn => self.0 = true,
+                    Instruction::TurnOff => self.0 = false,
+                    Instruction::Toggle => self.0 = !self.0,
+                }
+            }
+        }
+
         pub struct Grid(Vec<Vec<GridCell>>);
 
         impl Grid {
@@ -207,41 +217,14 @@ mod lib {
                     println!("Invalid rect: {:?}", cmd.rect);
                     return Err(GridError::InvalidRect(cmd.rect));
                 }
-                match cmd.instruction {
-                    Instruction::TurnOn => self.turn_on(&cmd.rect),
-                    Instruction::TurnOff => self.turn_off(&cmd.rect),
-                    Instruction::Toggle => self.toggle(&cmd.rect),
+
+                let Command { rect, instruction } = cmd;
+                for y in rect.start.y..=rect.end.y {
+                    for x in rect.start.x..=rect.end.x {
+                        self.0[y][x].apply_instruction(instruction);
+                    }
                 }
                 Ok(())
-            }
-
-            /// Attention: valid rect should be provided.
-            fn turn_on(&mut self, rect: &Rectangle) {
-                for y in rect.start.y..=rect.end.y {
-                    for x in rect.start.x..=rect.end.x {
-                        self.0[y][x] = GridCell(true);
-                    }
-                }
-            }
-
-            /// Attention: valid rect should be provided.
-            fn turn_off(&mut self, rect: &Rectangle) {
-                for y in rect.start.y..=rect.end.y {
-                    for x in rect.start.x..=rect.end.x {
-                        self.0[y][x] = GridCell(false);
-                    }
-                }
-            }
-
-            /// Attention: valid rect should be provided.
-            fn toggle(&mut self, rect: &Rectangle) {
-                for y in rect.start.y..=rect.end.y {
-                    for x in rect.start.x..=rect.end.x {
-                        let cell = self.0[y][x];
-                        let toggled = GridCell(!cell.0);
-                        self.0[y][x] = toggled;
-                    }
-                }
             }
         }
 
