@@ -54,6 +54,8 @@ mod lib {
     use std::{num::ParseIntError, str::FromStr};
 
     const GRID_SZ: usize = 1000;
+    const FIRST: usize = 0;
+    const LAST: usize = GRID_SZ - 1;
 
     #[derive(Debug)]
     pub enum FromStrError {
@@ -245,7 +247,7 @@ mod lib {
             mod apply_cmd {
                 use crate::lib::{
                     tests::grid::{GRID_EMPTY, GRID_FILLED},
-                    Command, Grid, Instruction, Point, Rectangle,
+                    Command, Grid, Instruction, Point, Rectangle, FIRST, LAST,
                 };
 
                 #[test]
@@ -254,8 +256,8 @@ mod lib {
                     let cmd = Command {
                         instruction: Instruction::TurnOn,
                         rect: Rectangle {
-                            start: Point { x: 0, y: 0 },
-                            end: Point { x: 999, y: 999 },
+                            start: Point { x: FIRST, y: FIRST },
+                            end: Point { x: LAST, y: LAST },
                         },
                     };
                     grid.apply_cmd(&cmd).unwrap();
@@ -268,8 +270,8 @@ mod lib {
                     let cmd = Command {
                         instruction: Instruction::TurnOn,
                         rect: Rectangle {
-                            start: Point { x: 0, y: 0 },
-                            end: Point { x: 999, y: 999 },
+                            start: Point { x: FIRST, y: FIRST },
+                            end: Point { x: LAST, y: LAST },
                         },
                     };
                     grid.apply_cmd(&cmd).unwrap();
@@ -287,8 +289,8 @@ mod lib {
                     let cmd = Command {
                         instruction: Instruction::Toggle,
                         rect: Rectangle {
-                            start: Point { x: 0, y: 0 },
-                            end: Point { x: 999, y: 999 },
+                            start: Point { x: FIRST, y: FIRST },
+                            end: Point { x: LAST, y: LAST },
                         },
                     };
                     grid.apply_cmd(&cmd).unwrap();
