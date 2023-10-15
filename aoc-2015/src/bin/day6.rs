@@ -179,11 +179,11 @@ mod lib {
     #[derive(Debug, Clone, Copy, PartialEq)]
     pub struct GridCell(pub bool);
 
-    pub struct Grid([[GridCell; GRID_SZ]; GRID_SZ]);
+    pub struct Grid(Box<[[GridCell; GRID_SZ]; GRID_SZ]>);
 
     impl Grid {
         pub fn new() -> Self {
-            Self([[GridCell(false); GRID_SZ]; GRID_SZ])
+            Self(Box::new([[GridCell(false); GRID_SZ]; GRID_SZ]))
         }
 
         pub fn count(&self, want: &GridCell) -> usize {
@@ -197,6 +197,7 @@ mod lib {
     impl Grid {
         pub fn apply_cmd(&mut self, cmd: &Command) -> Result<(), GridError> {
             if !cmd.rect.is_valid() {
+                println!("Invalid rect: {:?}", cmd.rect);
                 return Err(GridError::InvalidInstruction(cmd.instruction));
             }
             match cmd.instruction {
@@ -240,14 +241,6 @@ mod lib {
     #[cfg(test)]
     mod tests {
         mod grid {
-            use crate::lib::{GridCell, GRID_SZ};
-
-            const GRID_FILLED: [[GridCell; GRID_SZ]; GRID_SZ] =
-                [[GridCell(true); GRID_SZ]; GRID_SZ];
-
-            const GRID_EMPTY: [[GridCell; GRID_SZ]; GRID_SZ] =
-                [[GridCell(false); GRID_SZ]; GRID_SZ];
-
             mod count {
                 use crate::lib::{Grid, GridCell, GRID_SZ};
 
@@ -260,19 +253,18 @@ mod lib {
             }
 
             mod new {
-                use crate::lib::{tests::grid::GRID_EMPTY, Grid};
+                use crate::lib::{Grid, GridCell};
 
                 #[test]
                 fn test_new() {
                     let grid = Grid::new();
-                    assert_eq!(grid.0, GRID_EMPTY);
+                    assert_eq!(grid.count(&GridCell(true)), 0);
                 }
             }
 
             mod apply_cmd {
                 use crate::lib::{
-                    tests::grid::{GRID_EMPTY, GRID_FILLED},
-                    Command, Grid, Instruction, Point, Rectangle, FIRST, LAST,
+                    Command, Grid, GridCell, Instruction, Point, Rectangle, FIRST, LAST,
                 };
 
                 #[test]
@@ -286,7 +278,7 @@ mod lib {
                         },
                     };
                     grid.apply_cmd(&cmd).unwrap();
-                    assert_eq!(grid.0, GRID_FILLED);
+                    assert_eq!(grid.count(&GridCell(false)), 0);
                 }
 
                 #[test]
@@ -305,7 +297,7 @@ mod lib {
                         ..cmd
                     };
                     grid.apply_cmd(&cmd).unwrap();
-                    assert_eq!(grid.0, GRID_EMPTY);
+                    assert_eq!(grid.count(&GridCell(true)), 0);
                 }
 
                 #[test]
@@ -319,9 +311,9 @@ mod lib {
                         },
                     };
                     grid.apply_cmd(&cmd).unwrap();
-                    assert_eq!(grid.0, GRID_FILLED);
+                    assert_eq!(grid.count(&GridCell(false)), 0);
                     grid.apply_cmd(&cmd).unwrap();
-                    assert_eq!(grid.0, GRID_EMPTY);
+                    assert_eq!(grid.count(&GridCell(true)), 0);
                 }
             }
         }
