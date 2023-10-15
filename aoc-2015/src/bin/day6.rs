@@ -2,7 +2,7 @@ use std::{io::BufRead, path::PathBuf};
 
 use lib::Command;
 
-use crate::lib::grid_part1::{Grid, GridCell};
+use crate::lib::{grid_part1, grid_part2};
 
 fn main() -> Result<(), error::Error> {
     let filepath: PathBuf = std::env::args()
@@ -13,15 +13,21 @@ fn main() -> Result<(), error::Error> {
     let file = std::fs::File::open(filepath)?;
     let reader = std::io::BufReader::new(file);
 
-    let mut grid = Grid::new();
+    let mut grid1 = grid_part1::Grid::new();
+    let mut grid2 = grid_part2::Grid::new();
     for cmd in reader
         .lines()
         .flat_map(|line| line.map(|line| line.parse::<Command>()))
     {
-        grid.apply_cmd(&cmd?)?;
+        let cmd = cmd?;
+        grid1.apply_cmd(&cmd)?;
+        grid2.apply_cmd(&cmd)?;
     }
-    let lit_cells = grid.count(&GridCell(true));
-    println!("Lit cells: {}", lit_cells);
+    println!(
+        "Part1: lit cells: {}",
+        grid1.count(&grid_part1::GridCell(true))
+    );
+    println!("Part2: total brightness: {}", grid2.total_brightness());
     Ok(())
 }
 
