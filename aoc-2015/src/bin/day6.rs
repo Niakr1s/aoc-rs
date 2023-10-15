@@ -335,19 +335,33 @@ mod lib {
         use super::*;
 
         #[derive(Debug, Clone, Copy, PartialEq)]
-        pub struct GridCell(pub bool);
+        pub struct GridCell(pub usize);
+
+        impl GridCell {
+            pub fn apply_instruction(&mut self, instruction: &Instruction) {
+                match instruction {
+                    Instruction::TurnOn => self.0 += 1,
+                    Instruction::TurnOff => {
+                        if self.0 > 0 {
+                            self.0 -= 1;
+                        }
+                    }
+                    Instruction::Toggle => self.0 += 2,
+                }
+            }
+        }
 
         pub struct Grid(Box<[[GridCell; GRID_SZ]; GRID_SZ]>);
 
         impl Grid {
             pub fn new() -> Self {
-                Self(Box::new([[GridCell(false); GRID_SZ]; GRID_SZ]))
+                Self(Box::new([[GridCell(0); GRID_SZ]; GRID_SZ]))
             }
 
-            pub fn count(&self, want: &GridCell) -> usize {
+            pub fn total_brightness(&self) -> usize {
                 self.0
                     .iter()
-                    .map(|row| row.iter().filter(|&cell| cell == want).count())
+                    .map(|row| row.iter().map(|cell| cell.0).sum::<usize>())
                     .sum()
             }
         }
@@ -358,41 +372,14 @@ mod lib {
                     println!("Invalid rect: {:?}", cmd.rect);
                     return Err(GridError::InvalidRect(cmd.rect));
                 }
-                match cmd.instruction {
-                    Instruction::TurnOn => self.turn_on(&cmd.rect),
-                    Instruction::TurnOff => self.turn_off(&cmd.rect),
-                    Instruction::Toggle => self.toggle(&cmd.rect),
+
+                let rect = cmd.rect;
+                for y in rect.start.y..=rect.end.y {
+                    for x in rect.start.x..=rect.end.x {
+                        self.0[y][x].apply_instruction(&cmd.instruction);
+                    }
                 }
                 Ok(())
-            }
-
-            /// Attention: valid rect should be provided.
-            fn turn_on(&mut self, rect: &Rectangle) {
-                for y in rect.start.y..=rect.end.y {
-                    for x in rect.start.x..=rect.end.x {
-                        self.0[y][x] = GridCell(true);
-                    }
-                }
-            }
-
-            /// Attention: valid rect should be provided.
-            fn turn_off(&mut self, rect: &Rectangle) {
-                for y in rect.start.y..=rect.end.y {
-                    for x in rect.start.x..=rect.end.x {
-                        self.0[y][x] = GridCell(false);
-                    }
-                }
-            }
-
-            /// Attention: valid rect should be provided.
-            fn toggle(&mut self, rect: &Rectangle) {
-                for y in rect.start.y..=rect.end.y {
-                    for x in rect.start.x..=rect.end.x {
-                        let cell = self.0[y][x];
-                        let toggled = GridCell(!cell.0);
-                        self.0[y][x] = toggled;
-                    }
-                }
             }
         }
 
@@ -403,15 +390,25 @@ mod lib {
             mod grid {
                 use super::*;
 
-                mod count {
+                mod total_brightness {
                     use super::*;
                     use crate::lib::GRID_SZ;
 
                     #[test]
-                    fn test_count() {
+                    fn test_total_brightness_1() {
                         let grid = Grid::new();
-                        assert_eq!(grid.count(&GridCell(false)), GRID_SZ * GRID_SZ);
-                        assert_eq!(grid.count(&GridCell(true)), 0);
+                        assert_eq!(grid.total_brightness(), 0);
+                    }
+
+                    #[test]
+                    fn test_total_brightness_2() {
+                        let mut grid = Grid::new();
+                        for y in 0..grid.0.len() {
+                            for x in 0..grid.0[y].len() {
+                                grid.0[y][x] = GridCell(1);
+                            }
+                        }
+                        assert_eq!(grid.total_brightness(), GRID_SZ * GRID_SZ);
                     }
                 }
 
@@ -421,7 +418,7 @@ mod lib {
                     #[test]
                     fn test_new() {
                         let grid = Grid::new();
-                        assert_eq!(grid.count(&GridCell(true)), 0);
+                        assert_eq!(grid.total_brightness(), 0);
                     }
                 }
 
@@ -440,7 +437,7 @@ mod lib {
                             },
                         };
                         grid.apply_cmd(&cmd).unwrap();
-                        assert_eq!(grid.count(&GridCell(false)), 0);
+                        assert_eq!(grid.total_brightness(), GRID_SZ * GRID_SZ);
                     }
 
                     #[test]
@@ -459,7 +456,7 @@ mod lib {
                             ..cmd
                         };
                         grid.apply_cmd(&cmd).unwrap();
-                        assert_eq!(grid.count(&GridCell(true)), 0);
+                        assert_eq!(grid.total_brightness(), 0);
                     }
 
                     #[test]
@@ -473,9 +470,9 @@ mod lib {
                             },
                         };
                         grid.apply_cmd(&cmd).unwrap();
-                        assert_eq!(grid.count(&GridCell(false)), 0);
+                        assert_eq!(grid.total_brightness(), GRID_SZ * GRID_SZ * 2);
                         grid.apply_cmd(&cmd).unwrap();
-                        assert_eq!(grid.count(&GridCell(true)), 0);
+                        assert_eq!(grid.total_brightness(), GRID_SZ * GRID_SZ * 4);
                     }
                 }
             }
