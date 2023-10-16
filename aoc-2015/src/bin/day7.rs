@@ -469,6 +469,33 @@ mod lib {
                 }
 
                 #[test]
+                fn test_from_website() {
+                    let cmds: &[&str] = &[
+                        "123 -> x",
+                        "456 -> y",
+                        "x AND y -> d",
+                        "x OR y -> e",
+                        "x LSHIFT 2 -> f",
+                        "y RSHIFT 2 -> g",
+                        "NOT x -> h",
+                        "NOT y -> i",
+                    ];
+                    let mut pool = GatePool::new();
+                    for cmd in cmds {
+                        pool.set(cmd.parse().unwrap());
+                    }
+                    assert_eq!(pool.gates.len(), 8);
+                    assert_eq!(pool.get(&"d".into()).unwrap(), 72);
+                    assert_eq!(pool.get(&"e".into()).unwrap(), 507);
+                    assert_eq!(pool.get(&"f".into()).unwrap(), 492);
+                    assert_eq!(pool.get(&"g".into()).unwrap(), 114);
+                    assert_eq!(pool.get(&"h".into()).unwrap(), 65412);
+                    assert_eq!(pool.get(&"i".into()).unwrap(), 65079);
+                    assert_eq!(pool.get(&"x".into()).unwrap(), 123);
+                    assert_eq!(pool.get(&"y".into()).unwrap(), 456);
+                }
+
+                #[test]
                 fn test_num() {
                     let mut pool = GatePool::new();
                     let cmd: Cmd = "123 -> x".parse().unwrap();
