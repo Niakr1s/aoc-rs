@@ -5,7 +5,7 @@ pub mod from_str;
 use std::{num::ParseIntError, str::FromStr};
 
 #[derive(Debug)]
-pub struct Cmd {
+pub struct Wire {
     pub op: Op,
     pub target: Gate,
 }

@@ -15,7 +15,7 @@ pub enum ParseErrorKind {
     ParseIntError(ParseIntError),
 }
 
-impl FromStr for Cmd {
+impl FromStr for Wire {
     type Err = ParseError;
 
     /// Input examples: 123, NOT x, x AND y
@@ -31,7 +31,7 @@ impl FromStr for Cmd {
         let op: Op = split[0].parse()?;
         let target: Gate = split[1].parse()?;
 
-        Ok(Cmd { op, target })
+        Ok(Wire { op, target })
     }
 }
 
@@ -211,94 +211,94 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_no_arrow() {
-        "123 > x".parse::<Cmd>().unwrap();
+        "123 > x".parse::<Wire>().unwrap();
     }
 
     #[test]
     fn test_gate_or_number_num() {
-        let cmd: Cmd = "123 -> x".parse().unwrap();
-        assert_eq!(cmd.op, Op::GateOrNumber(GateOrNumber::Number(Number(123))));
-        assert_eq!(cmd.target, Gate("x".to_owned()));
+        let wire: Wire = "123 -> x".parse().unwrap();
+        assert_eq!(wire.op, Op::GateOrNumber(GateOrNumber::Number(Number(123))));
+        assert_eq!(wire.target, Gate("x".to_owned()));
     }
 
     #[test]
     fn test_gate_or_number_gate() {
-        let cmd: Cmd = "y -> x".parse().unwrap();
+        let wire: Wire = "y -> x".parse().unwrap();
         assert_eq!(
-            cmd.op,
+            wire.op,
             Op::GateOrNumber(GateOrNumber::Gate(Gate("y".to_owned())))
         );
-        assert_eq!(cmd.target, Gate("x".to_owned()));
+        assert_eq!(wire.target, Gate("x".to_owned()));
     }
 
     #[test]
     fn test_and_gate() {
-        let cmd: Cmd = "x AND y -> x".parse().unwrap();
+        let wire: Wire = "x AND y -> x".parse().unwrap();
         assert_eq!(
-            cmd.op,
+            wire.op,
             Op::Binary(BinaryOp {
                 kind: BinaryOpKind::And,
                 lhs: GateOrNumber::Gate(Gate("x".to_owned())),
                 rhs: Gate("y".to_owned()),
             })
         );
-        assert_eq!(cmd.target, Gate("x".to_owned()));
+        assert_eq!(wire.target, Gate("x".to_owned()));
     }
 
     #[test]
     fn test_and_number() {
-        let cmd: Cmd = "1 AND y -> x".parse().unwrap();
+        let wire: Wire = "1 AND y -> x".parse().unwrap();
         assert_eq!(
-            cmd.op,
+            wire.op,
             Op::Binary(BinaryOp {
                 kind: BinaryOpKind::And,
                 lhs: GateOrNumber::Number(Number(1)),
                 rhs: Gate("y".to_owned()),
             })
         );
-        assert_eq!(cmd.target, Gate("x".to_owned()));
+        assert_eq!(wire.target, Gate("x".to_owned()));
     }
 
     #[test]
     fn test_or_gate() {
-        let cmd: Cmd = "x OR y -> x".parse().unwrap();
+        let wire: Wire = "x OR y -> x".parse().unwrap();
         assert_eq!(
-            cmd.op,
+            wire.op,
             Op::Binary(BinaryOp {
                 kind: BinaryOpKind::Or,
                 lhs: GateOrNumber::Gate(Gate("x".to_owned())),
                 rhs: Gate("y".to_owned()),
             })
         );
-        assert_eq!(cmd.target, Gate("x".to_owned()));
+        assert_eq!(wire.target, Gate("x".to_owned()));
     }
 
     #[test]
     fn test_or_number() {
-        let cmd: Cmd = "1 OR y -> x".parse().unwrap();
+        let wire: Wire = "1 OR y -> x".parse().unwrap();
         assert_eq!(
-            cmd.op,
+            wire.op,
             Op::Binary(BinaryOp {
                 kind: BinaryOpKind::Or,
                 lhs: GateOrNumber::Number(Number(1)),
                 rhs: Gate("y".to_owned()),
             })
         );
-        assert_eq!(cmd.target, Gate("x".to_owned()));
+        assert_eq!(wire.target, Gate("x".to_owned()));
     }
 
     #[test]
     fn test_lshift() {
-        let cmd: Cmd = "x LSHIFT 2 -> x".parse().unwrap();
+        let wire: Wire = "x LSHIFT 2 -> x".parse().unwrap();
         assert_eq!(
-            cmd.op,
+            wire.op,
             Op::Shift(ShiftOp {
                 kind: ShiftOpKind::Lshift,
                 lhs: Gate("x".to_owned()),
                 rhs: Number(2),
             })
         );
-        assert_eq!(cmd.target, Gate("x".to_owned()));
+        assert_eq!(wire.target, Gate("x".to_owned()));
     }
 
     #[test]
@@ -309,16 +309,16 @@ mod tests {
 
     #[test]
     fn test_rshift() {
-        let cmd: Cmd = "x RSHIFT 2 -> x".parse().unwrap();
+        let wire: Wire = "x RSHIFT 2 -> x".parse().unwrap();
         assert_eq!(
-            cmd.op,
+            wire.op,
             Op::Shift(ShiftOp {
                 kind: ShiftOpKind::Rshift,
                 lhs: Gate("x".to_owned()),
                 rhs: Number(2),
             })
         );
-        assert_eq!(cmd.target, Gate("x".to_owned()));
+        assert_eq!(wire.target, Gate("x".to_owned()));
     }
 
     #[test]
@@ -329,14 +329,14 @@ mod tests {
 
     #[test]
     fn test_not() {
-        let cmd: Cmd = "NOT x -> x".parse().unwrap();
+        let wire: Wire = "NOT x -> x".parse().unwrap();
         assert_eq!(
-            cmd.op,
+            wire.op,
             Op::Unary(UnaryOp {
                 kind: UnaryOpKind::Not,
                 gate: Gate("x".to_owned()),
             })
         );
-        assert_eq!(cmd.target, Gate("x".to_owned()));
+        assert_eq!(wire.target, Gate("x".to_owned()));
     }
 }

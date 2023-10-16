@@ -1,6 +1,6 @@
 use std::{io::BufRead, path::PathBuf};
 
-use aoc_2015_day7::{circuit::Circuit, error, ops::Cmd};
+use aoc_2015_day7::{circuit::Circuit, error, ops::Wire};
 
 fn main() -> Result<(), error::Error> {
     let filepath: PathBuf = std::env::args()
@@ -18,7 +18,7 @@ fn run(filepath: PathBuf) -> Result<(), error::Error> {
     let mut circuit = Circuit::new();
     for line in reader.lines() {
         let line = line?;
-        let wire: Cmd = line.parse()?;
+        let wire: Wire = line.parse()?;
         circuit.set(wire);
     }
     println!(

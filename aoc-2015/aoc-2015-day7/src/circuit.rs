@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::ops::{Cmd, Gate, GateOrNumber, Number, Op};
+use crate::ops::{Gate, GateOrNumber, Number, Op, Wire};
 
 pub struct Circuit {
     gates: HashMap<Gate, Op>,
@@ -42,7 +42,7 @@ impl Circuit {
         Ok(res)
     }
 
-    pub fn set(&mut self, wire: Cmd) {
+    pub fn set(&mut self, wire: Wire) {
         self.gates.insert(wire.target, wire.op);
     }
 }
@@ -59,7 +59,7 @@ mod tests {
 
             macro_rules! num {
                 ($s:expr, $n: expr) => {
-                    Cmd {
+                    Wire {
                         op: Op::GateOrNumber(GateOrNumber::Number(Number($n))),
                         target: Gate($s.to_owned()),
                     }
@@ -68,7 +68,7 @@ mod tests {
 
             #[test]
             fn test_from_website() {
-                let cmds: &[&str] = &[
+                let wires: &[&str] = &[
                     "123 -> x",
                     "456 -> y",
                     "x AND y -> d",
@@ -79,8 +79,8 @@ mod tests {
                     "NOT y -> i",
                 ];
                 let mut circuit = Circuit::new();
-                for cmd in cmds {
-                    circuit.set(cmd.parse().unwrap());
+                for wire in wires {
+                    circuit.set(wire.parse().unwrap());
                 }
                 assert_eq!(circuit.gates.len(), 8);
                 assert_eq!(circuit.get(&"d".into()).unwrap(), 72);
@@ -96,8 +96,8 @@ mod tests {
             #[test]
             fn test_num() {
                 let mut circuit = Circuit::new();
-                let cmd: Cmd = "123 -> x".parse().unwrap();
-                circuit.set(cmd);
+                let wire: Wire = "123 -> x".parse().unwrap();
+                circuit.set(wire);
                 assert_eq!(circuit.gates.len(), 1);
                 assert_eq!(circuit.get(&"x".into()).unwrap(), 123);
             }
@@ -108,8 +108,8 @@ mod tests {
                 let (x, y) = (0b0101, 0b1011);
                 circuit.set(num!("x", x));
                 circuit.set(num!("y", y));
-                let cmd: Cmd = "x AND y -> z".parse().unwrap();
-                circuit.set(cmd);
+                let wire: Wire = "x AND y -> z".parse().unwrap();
+                circuit.set(wire);
                 assert_eq!(circuit.gates.len(), 3);
                 assert_eq!(circuit.get(&"z".into()).unwrap(), 0b0001);
                 assert_eq!(circuit.get(&"x".into()).unwrap(), x);
@@ -122,8 +122,8 @@ mod tests {
                 let (x, y) = (0b0101, 0b1010);
                 circuit.set(num!("x", x));
                 circuit.set(num!("y", y));
-                let cmd: Cmd = "x OR y -> z".parse().unwrap();
-                circuit.set(cmd);
+                let wire: Wire = "x OR y -> z".parse().unwrap();
+                circuit.set(wire);
                 assert_eq!(circuit.gates.len(), 3);
                 assert_eq!(circuit.get(&"z".into()).unwrap(), 0b1111);
                 assert_eq!(circuit.get(&"x".into()).unwrap(), x);
@@ -135,8 +135,8 @@ mod tests {
                 let mut circuit = Circuit::new();
                 let x = 0b0101;
                 circuit.set(num!("x", x));
-                let cmd: Cmd = "x LSHIFT 1 -> y".parse().unwrap();
-                circuit.set(cmd);
+                let wire: Wire = "x LSHIFT 1 -> y".parse().unwrap();
+                circuit.set(wire);
                 assert_eq!(circuit.gates.len(), 2);
                 assert_eq!(circuit.get(&"y".into()).unwrap(), 0b1010);
             }
@@ -146,8 +146,8 @@ mod tests {
                 let mut circuit = Circuit::new();
                 let x = 0b0101;
                 circuit.set(num!("x", x));
-                let cmd: Cmd = "x RSHIFT 1 -> z".parse().unwrap();
-                circuit.set(cmd);
+                let wire: Wire = "x RSHIFT 1 -> z".parse().unwrap();
+                circuit.set(wire);
                 assert_eq!(circuit.gates.len(), 2);
                 assert_eq!(circuit.get(&"z".into()).unwrap(), 0b0010);
             }
@@ -157,8 +157,8 @@ mod tests {
                 let mut circuit = Circuit::new();
                 let x = 0b0101;
                 circuit.set(num!("x", x));
-                let cmd: Cmd = "NOT x -> z".parse().unwrap();
-                circuit.set(cmd);
+                let wire: Wire = "NOT x -> z".parse().unwrap();
+                circuit.set(wire);
                 assert_eq!(circuit.gates.len(), 2);
                 assert_eq!(circuit.get(&"z".into()).unwrap(), 0b1111_1111_1111_1010);
             }
