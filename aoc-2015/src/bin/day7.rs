@@ -547,14 +547,14 @@ mod lib {
                 }
 
                 #[test]
-                fn test_num() {
+                fn test_gate_or_number_num() {
                     let cmd: Cmd = "123 -> x".parse().unwrap();
                     assert_eq!(cmd.op, Op::GateOrNumber(GateOrNumber::Number(Number(123))));
                     assert_eq!(cmd.target, Gate("x".to_owned()));
                 }
 
                 #[test]
-                fn test_gate() {
+                fn test_gate_or_number_gate() {
                     let cmd: Cmd = "y -> x".parse().unwrap();
                     assert_eq!(
                         cmd.op,
@@ -564,7 +564,7 @@ mod lib {
                 }
 
                 #[test]
-                fn test_and() {
+                fn test_and_gate() {
                     let cmd: Cmd = "x AND y -> x".parse().unwrap();
                     assert_eq!(
                         cmd.op,
@@ -578,13 +578,41 @@ mod lib {
                 }
 
                 #[test]
-                fn test_or() {
+                fn test_and_number() {
+                    let cmd: Cmd = "1 AND y -> x".parse().unwrap();
+                    assert_eq!(
+                        cmd.op,
+                        Op::Binary(BinaryOp {
+                            kind: BinaryOpKind::And,
+                            lhs: GateOrNumber::Number(Number(1)),
+                            rhs: Gate("y".to_owned()),
+                        })
+                    );
+                    assert_eq!(cmd.target, Gate("x".to_owned()));
+                }
+
+                #[test]
+                fn test_or_gate() {
                     let cmd: Cmd = "x OR y -> x".parse().unwrap();
                     assert_eq!(
                         cmd.op,
                         Op::Binary(BinaryOp {
                             kind: BinaryOpKind::Or,
                             lhs: GateOrNumber::Gate(Gate("x".to_owned())),
+                            rhs: Gate("y".to_owned()),
+                        })
+                    );
+                    assert_eq!(cmd.target, Gate("x".to_owned()));
+                }
+
+                #[test]
+                fn test_or_number() {
+                    let cmd: Cmd = "1 OR y -> x".parse().unwrap();
+                    assert_eq!(
+                        cmd.op,
+                        Op::Binary(BinaryOp {
+                            kind: BinaryOpKind::Or,
+                            lhs: GateOrNumber::Number(Number(1)),
                             rhs: Gate("y".to_owned()),
                         })
                     );
