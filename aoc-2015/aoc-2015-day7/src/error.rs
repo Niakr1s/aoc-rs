@@ -1,26 +1,11 @@
-use crate::{circuit::ComputeError, wiring::from_str::ParseError};
+use crate::{circuit, wiring};
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    Io(std::io::Error),
-    Parse(ParseError),
-    Compute(ComputeError),
-}
-
-impl From<std::io::Error> for Error {
-    fn from(e: std::io::Error) -> Self {
-        Error::Io(e)
-    }
-}
-
-impl From<ParseError> for Error {
-    fn from(e: ParseError) -> Self {
-        Error::Parse(e)
-    }
-}
-
-impl From<ComputeError> for Error {
-    fn from(e: ComputeError) -> Self {
-        Error::Compute(e)
-    }
+    #[error("I/O error: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("Parse error: {0}")]
+    Parse(#[from] wiring::from_str::ParseError),
+    #[error("Circuit compute error: {0}")]
+    Compute(circuit::ComputeError),
 }

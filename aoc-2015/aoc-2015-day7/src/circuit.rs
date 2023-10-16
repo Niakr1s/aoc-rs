@@ -6,8 +6,9 @@ pub struct Circuit {
     gates: HashMap<Gate, Op>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum ComputeError {
+    #[error("Gate not found: {0:?}")]
     GateNotFound(Gate),
 }
 

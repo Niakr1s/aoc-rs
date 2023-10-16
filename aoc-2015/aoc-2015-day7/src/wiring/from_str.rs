@@ -1,18 +1,25 @@
 use super::*;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("Parse error for '{string}': {kind}")]
 pub struct ParseError {
+    #[source]
     pub kind: ParseErrorKind,
     pub string: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum ParseErrorKind {
+    #[error("No arrow")]
     NoArrow,
+    #[error("Invalid length")]
     InvalidLength,
+    #[error("Invalid unary type")]
     InvalidUnaryType,
+    #[error("Invalid binary type")]
     InvalidBinaryType,
-    ParseIntError(ParseIntError),
+    #[error("Invalid number: {0}")]
+    ParseIntError(#[from] ParseIntError),
 }
 
 impl FromStr for Wire {
