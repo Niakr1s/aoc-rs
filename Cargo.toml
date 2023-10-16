@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "aoc-*",
+    "aoc-*/aoc-*",
 ]
 resolver = "2"
