@@ -108,9 +108,14 @@ mod lib {
     }
 
     #[derive(Debug, PartialEq)]
-    pub enum Op {
+    pub enum GateOrNumber {
         Gate(Gate),
         Number(Number),
+    }
+
+    #[derive(Debug, PartialEq)]
+    pub enum Op {
+        GateOrNumber(GateOrNumber),
         Unary(UnaryOp),
         Binary(BinaryOp),
         Shift(ShiftOp),
@@ -218,8 +223,10 @@ mod lib {
         fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
             println!("{:?}", self);
             let res = match self {
-                Op::Gate(gate) => pool.get(gate)?,
-                Op::Number(num) => num.compute(),
+                Op::GateOrNumber(gate_or_num) => match gate_or_num {
+                    GateOrNumber::Gate(gate) => pool.get(gate)?,
+                    GateOrNumber::Number(num) => num.compute(),
+                },
                 Op::Unary(op) => op.compute(pool)?,
                 Op::Binary(op) => op.compute(pool)?,
                 Op::Shift(op) => op.compute(pool)?,
@@ -271,13 +278,7 @@ mod lib {
             let s = s.trim();
             let split = s.split_whitespace().collect::<Vec<_>>();
             let op = match split.len() {
-                1 => {
-                    let n = s.parse::<Number>();
-                    match n {
-                        Ok(num) => Op::Number(num),
-                        Err(_) => Op::Gate(s.parse::<Gate>()?),
-                    }
-                }
+                1 => Op::GateOrNumber(s.parse()?),
                 2 => Op::Unary(s.parse()?),
                 3 => {
                     let last = *split.last().unwrap();
@@ -308,6 +309,20 @@ mod lib {
                 string: s.to_owned(),
             })?);
             Ok(num)
+        }
+    }
+
+    impl FromStr for GateOrNumber {
+        type Err = ParseError;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let s = s.trim();
+            let n = s.parse::<Number>();
+            let res = match n {
+                Ok(num) => GateOrNumber::Number(num),
+                Err(_) => GateOrNumber::Gate(s.parse()?),
+            };
+            Ok(res)
         }
     }
 
@@ -437,7 +452,7 @@ mod lib {
                 macro_rules! num {
                     ($s:expr, $n: expr) => {
                         Cmd {
-                            op: Op::Number(Number($n)),
+                            op: Op::GateOrNumber(GateOrNumber::Number(Number($n))),
                             target: Gate($s.to_owned()),
                         }
                     };
@@ -524,7 +539,17 @@ mod lib {
                 #[test]
                 fn test_num() {
                     let cmd: Cmd = "123 -> x".parse().unwrap();
-                    assert_eq!(cmd.op, Op::Number(Number(123)));
+                    assert_eq!(cmd.op, Op::GateOrNumber(GateOrNumber::Number(Number(123))));
+                    assert_eq!(cmd.target, Gate("x".to_owned()));
+                }
+
+                #[test]
+                fn test_gate() {
+                    let cmd: Cmd = "y -> x".parse().unwrap();
+                    assert_eq!(
+                        cmd.op,
+                        Op::GateOrNumber(GateOrNumber::Gate(Gate("y".to_owned())))
+                    );
                     assert_eq!(cmd.target, Gate("x".to_owned()));
                 }
 
