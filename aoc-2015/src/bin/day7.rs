@@ -8,18 +8,28 @@ fn main() -> Result<(), error::Error> {
         .next()
         .expect("Provide a file path as first argument")
         .into();
+    run(filepath)
+}
+
+fn run(filepath: PathBuf) -> Result<(), error::Error> {
     let file = std::fs::File::open(filepath)?;
     let reader = std::io::BufReader::new(file);
 
     let mut pool = lib::GatePool::new();
     for line in reader.lines() {
         let line = line?;
-        let cmd: Cmd = dbg!(line.parse()?);
-        _ = pool.apply_cmd(&cmd);
+        let wire: Cmd = line.parse()?;
+        pool.set(wire);
     }
-    println!("Part1: contents of x is {}", pool.get(&"a".into()).unwrap());
+    println!("Part1: contents of a is {}", pool.get(&"a".into()).unwrap());
 
     Ok(())
+}
+
+#[test]
+fn test_run() {
+    let filepath: PathBuf = std::path::PathBuf::from("d:/download/2015-day7.txt");
+    run(filepath).unwrap();
 }
 
 mod error {
@@ -69,7 +79,7 @@ mod lib {
     }
 
     pub struct GatePool {
-        gates: HashMap<Gate, u16>,
+        gates: HashMap<Gate, Op>,
     }
 
     impl GatePool {
@@ -79,35 +89,26 @@ mod lib {
             }
         }
 
-        pub fn get(&self, gate: &Gate) -> Option<&u16> {
-            self.gates.get(gate)
+        pub fn get(&self, gate: &Gate) -> Result<u16, ComputeError> {
+            self.gates
+                .get(gate)
+                .ok_or(ComputeError::GateNotFound(gate.clone()))?
+                .compute(&self)
         }
 
-        pub fn set(&mut self, gate: Gate, value: u16) {
-            self.gates.insert(gate, value);
-        }
-
-        pub fn apply_cmd(&mut self, cmd: &Cmd) -> Result<(), ComputeError> {
-            cmd.compute(self)
+        pub fn set(&mut self, wire: Cmd) {
+            self.gates.insert(wire.target, wire.op);
         }
     }
 
     #[derive(Debug)]
     pub struct Cmd {
-        op: Op,
-        target: Gate,
-    }
-
-    impl Cmd {
-        fn compute(&self, pool: &mut GatePool) -> Result<(), ComputeError> {
-            let res = self.op.compute(pool)?;
-            pool.set(self.target.clone(), res);
-            Ok(())
-        }
+        pub op: Op,
+        pub target: Gate,
     }
 
     #[derive(Debug, PartialEq)]
-    enum Op {
+    pub enum Op {
         Gate(Gate),
         Number(Number),
         Unary(UnaryOp),
@@ -193,41 +194,31 @@ mod lib {
 
     impl UnaryOp {
         fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
-            let num = pool
-                .get(&self.gate)
-                .ok_or(ComputeError::GateNotFound(self.gate.clone()))?;
-            Ok(self.kind.compute(*num))
+            let num = pool.get(&self.gate)?;
+            Ok(self.kind.compute(num))
         }
     }
 
     impl BinaryOp {
         fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
-            let lhs = pool
-                .get(&self.lhs)
-                .ok_or(ComputeError::GateNotFound(self.lhs.clone()))?;
-            let rhs = pool
-                .get(&self.rhs)
-                .ok_or(ComputeError::GateNotFound(self.rhs.clone()))?;
-            Ok(self.kind.compute(*lhs, *rhs))
+            let lhs = pool.get(&self.lhs)?;
+            let rhs = pool.get(&self.rhs)?;
+            Ok(self.kind.compute(lhs, rhs))
         }
     }
 
     impl ShiftOp {
         fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
-            let lhs = pool
-                .get(&self.lhs)
-                .ok_or(ComputeError::GateNotFound(self.lhs.clone()))?;
-
-            Ok(self.kind.compute(*lhs, self.rhs.0))
+            let lhs = pool.get(&self.lhs)?;
+            Ok(self.kind.compute(lhs, self.rhs.0))
         }
     }
 
     impl Op {
         fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
+            println!("{:?}", self);
             let res = match self {
-                Op::Gate(gate) => *pool
-                    .get(gate)
-                    .ok_or(ComputeError::GateNotFound(gate.clone()))?,
+                Op::Gate(gate) => pool.get(gate)?,
                 Op::Number(num) => num.compute(),
                 Op::Unary(op) => op.compute(pool)?,
                 Op::Binary(op) => op.compute(pool)?,
@@ -277,7 +268,8 @@ mod lib {
 
         /// Input examples: 123, NOT x, x AND y
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let split = s.trim().split_whitespace().collect::<Vec<_>>();
+            let s = s.trim();
+            let split = s.split_whitespace().collect::<Vec<_>>();
             let op = match split.len() {
                 1 => {
                     let n = s.parse::<Number>();
@@ -442,72 +434,81 @@ mod lib {
             mod compute {
                 use super::*;
 
+                macro_rules! num {
+                    ($s:expr, $n: expr) => {
+                        Cmd {
+                            op: Op::Number(Number($n)),
+                            target: Gate($s.to_owned()),
+                        }
+                    };
+                }
+
                 #[test]
                 fn test_num() {
                     let mut pool = GatePool::new();
                     let cmd: Cmd = "123 -> x".parse().unwrap();
-                    cmd.compute(&mut pool).unwrap();
+                    pool.set(cmd);
                     assert_eq!(pool.gates.len(), 1);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), &123);
+                    assert_eq!(pool.get(&"x".into()).unwrap(), 123);
                 }
 
                 #[test]
                 fn test_and() {
                     let mut pool = GatePool::new();
                     let (x, y) = (0b0101, 0b1011);
-                    pool.set("x".into(), x);
-                    pool.set("y".into(), y);
+                    pool.set(num!("x", x));
+                    pool.set(num!("y", y));
                     let cmd: Cmd = "x AND y -> x".parse().unwrap();
-                    cmd.compute(&mut pool).unwrap();
+                    pool.set(cmd);
                     assert_eq!(pool.gates.len(), 2);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), &0b0001);
-                    assert_eq!(pool.get(&"y".into()).unwrap(), &y);
+                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b0001);
+                    assert_eq!(pool.get(&"y".into()).unwrap(), y);
                 }
 
                 #[test]
                 fn test_or() {
                     let mut pool = GatePool::new();
                     let (x, y) = (0b0101, 0b1010);
-                    pool.set("x".into(), x);
-                    pool.set("y".into(), y);
+                    pool.set(num!("x", x));
+                    pool.set(num!("y", y));
                     let cmd: Cmd = "x OR y -> x".parse().unwrap();
-                    cmd.compute(&mut pool).unwrap();
+                    pool.set(cmd);
                     assert_eq!(pool.gates.len(), 2);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), &0b1111);
-                    assert_eq!(pool.get(&"y".into()).unwrap(), &y);
+                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b1111);
+                    assert_eq!(pool.get(&"y".into()).unwrap(), y);
                 }
 
                 #[test]
                 fn test_lshift() {
                     let mut pool = GatePool::new();
                     let x = 0b0101;
-                    pool.set("x".into(), x);
+                    pool.set(num!("x", x));
                     let cmd: Cmd = "x LSHIFT 1 -> x".parse().unwrap();
-                    cmd.compute(&mut pool).unwrap();
+                    pool.set(cmd);
                     assert_eq!(pool.gates.len(), 1);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), &0b1010);
+                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b1010);
                 }
 
                 #[test]
                 fn test_rshift() {
                     let mut pool = GatePool::new();
                     let x = 0b0101;
-                    pool.set("x".into(), x);
+                    pool.set(num!("x", x));
                     let cmd: Cmd = "x RSHIFT 1 -> x".parse().unwrap();
-                    cmd.compute(&mut pool).unwrap();
+                    pool.set(cmd);
                     assert_eq!(pool.gates.len(), 1);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), &0b0010);
+                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b0010);
                 }
 
                 #[test]
                 fn test_not() {
                     let mut pool = GatePool::new();
                     let x = 0b0101;
-                    pool.set("x".into(), x);
+                    pool.set(num!("x", x));
                     let cmd: Cmd = "NOT x -> x".parse().unwrap();
-                    cmd.compute(&mut pool).unwrap();
+                    pool.set(cmd);
                     assert_eq!(pool.gates.len(), 1);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), &0b1111_1111_1111_1010);
+                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b1111_1111_1111_1010);
                 }
             }
 
