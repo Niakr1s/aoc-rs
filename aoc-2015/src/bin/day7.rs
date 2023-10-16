@@ -95,13 +95,21 @@ mod lib {
                 .get(gate)
                 .ok_or(ComputeError::GateNotFound(gate.clone()))?;
             let op = op.clone();
-            println!("BEG: {:?} {:?}", gate, op);
-            let res = op.compute(self)?;
-            self.gates.insert(
-                gate.clone(),
-                Op::GateOrNumber(GateOrNumber::Number(Number(res))),
-            );
-            println!("END: {:?} {:?} => {res:?}", gate, op);
+
+            // println!("BEG: {:?} {:?}", gate, op);
+            let res = match op {
+                Op::GateOrNumber(GateOrNumber::Number(Number(n))) => n,
+                _ => {
+                    let res = op.compute(self)?;
+                    self.gates.insert(
+                        gate.clone(),
+                        Op::GateOrNumber(GateOrNumber::Number(Number(res))),
+                    );
+                    res
+                }
+            };
+            // println!("END: {:?} {:?} => {res:?}", gate, op);
+
             Ok(res)
         }
 
