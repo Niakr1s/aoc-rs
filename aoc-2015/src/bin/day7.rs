@@ -89,15 +89,20 @@ mod lib {
             }
         }
 
-        pub fn get(&self, gate: &Gate) -> Result<u16, ComputeError> {
+        pub fn get(&mut self, gate: &Gate) -> Result<u16, ComputeError> {
             let op = self
                 .gates
                 .get(gate)
                 .ok_or(ComputeError::GateNotFound(gate.clone()))?;
+            let op = op.clone();
             println!("BEG: {:?} {:?}", gate, op);
-            let res = op.compute(&self);
+            let res = op.compute(self)?;
+            self.gates.insert(
+                gate.clone(),
+                Op::GateOrNumber(GateOrNumber::Number(Number(res))),
+            );
             println!("END: {:?} {:?} => {res:?}", gate, op);
-            res
+            Ok(res)
         }
 
         pub fn set(&mut self, wire: Cmd) {
@@ -111,13 +116,13 @@ mod lib {
         pub target: Gate,
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub enum GateOrNumber {
         Gate(Gate),
         Number(Number),
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub enum Op {
         GateOrNumber(GateOrNumber),
         Unary(UnaryOp),
@@ -125,40 +130,40 @@ mod lib {
         Shift(ShiftOp),
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     enum UnaryOpKind {
         Not,
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     enum BinaryOpKind {
         And,
         Or,
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     enum ShiftOpKind {
         Lshift,
         Rshift,
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub struct Number(u16);
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub struct UnaryOp {
         kind: UnaryOpKind,
         gate: Gate,
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub struct BinaryOp {
         kind: BinaryOpKind,
         lhs: GateOrNumber,
         rhs: Gate,
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub struct ShiftOp {
         kind: ShiftOpKind,
         lhs: Gate,
@@ -198,7 +203,7 @@ mod lib {
     }
 
     impl GateOrNumber {
-        fn get_from_pool(&self, pool: &GatePool) -> Result<u16, ComputeError> {
+        fn get_from_pool(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
             match self {
                 GateOrNumber::Gate(gate) => pool.get(gate),
                 GateOrNumber::Number(num) => Ok(num.0),
@@ -207,20 +212,20 @@ mod lib {
     }
 
     impl Gate {
-        fn get_from_pool(&self, pool: &GatePool) -> Result<u16, ComputeError> {
+        fn get_from_pool(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
             pool.get(self)
         }
     }
 
     impl UnaryOp {
-        fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
+        fn compute(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
             let num = pool.get(&self.gate)?;
             Ok(self.kind.compute(num))
         }
     }
 
     impl BinaryOp {
-        fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
+        fn compute(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
             let lhs = self.lhs.get_from_pool(pool)?;
             let rhs = self.rhs.get_from_pool(pool)?;
             Ok(self.kind.compute(lhs, rhs))
@@ -228,14 +233,14 @@ mod lib {
     }
 
     impl ShiftOp {
-        fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
+        fn compute(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
             let lhs = pool.get(&self.lhs)?;
             Ok(self.kind.compute(lhs, self.rhs.0))
         }
     }
 
     impl Op {
-        fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
+        fn compute(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
             let res = match self {
                 Op::GateOrNumber(gate_or_num) => match gate_or_num {
                     GateOrNumber::Gate(gate) => pool.get(gate)?,
