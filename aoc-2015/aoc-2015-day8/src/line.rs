@@ -4,6 +4,17 @@ pub struct Line {
     utf8_len: usize,
 }
 
+#[allow(unused_macros)]
+macro_rules! L {
+    ($line:expr) => {
+        Line::new(String::from($line)).unwrap()
+    };
+}
+
+const ESC: char = '\\';
+const QOUTE: char = '\"';
+const X: char = 'x';
+
 #[derive(Debug, thiserror::Error)]
 pub enum LineValidationError {
     #[error("line should be quoted")]
@@ -12,12 +23,64 @@ pub enum LineValidationError {
     TooShort,
 }
 
-pub mod line_len {
+pub mod line_encode {
     use super::*;
 
-    const ESC: char = '\\';
-    const QOUTE: char = '\"';
-    const X: char = 'x';
+    impl Line {
+        pub fn encode(&self) -> Line {
+            let mut line = String::new();
+            line.push(QOUTE);
+            for ch in self.line.chars() {
+                if matches!(ch, ESC | QOUTE) {
+                    line.push(ESC);
+                }
+                line.push(ch);
+            }
+            line.push(QOUTE);
+            Line::new(line).expect("should be valid")
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_encode_1() {
+            let l = L!(r#""""#).encode();
+            assert_eq!(l.line, r#""\"\"""#);
+            assert_eq!(l.len_in_code(), 6);
+            assert_eq!(l.len_in_memory(), 2);
+        }
+
+        #[test]
+        fn test_encode_2() {
+            let l = L!(r#""abc""#).encode();
+            assert_eq!(l.line, r#""\"abc\"""#);
+            assert_eq!(l.len_in_code(), 9);
+            assert_eq!(l.len_in_memory(), 5);
+        }
+
+        #[test]
+        fn test_encode_3() {
+            let l = L!(r#""aaa\"aaa""#).encode();
+            assert_eq!(l.line, r#""\"aaa\\\"aaa\"""#);
+            assert_eq!(l.len_in_code(), 16);
+            assert_eq!(l.len_in_memory(), 10);
+        }
+
+        #[test]
+        fn test_encode_4() {
+            let l = L!(r#""\x27""#).encode();
+            assert_eq!(l.line, r#""\"\\x27\"""#);
+            assert_eq!(l.len_in_code(), 11);
+            assert_eq!(l.len_in_memory(), 6);
+        }
+    }
+}
+
+pub mod line_len {
+    use super::*;
 
     impl Line {
         pub fn new(line: String) -> Result<Self, LineValidationError> {
@@ -72,12 +135,6 @@ pub mod line_len {
 
         mod len {
             use super::*;
-
-            macro_rules! L {
-                ($line:expr) => {
-                    Line::new(String::from($line)).unwrap()
-                };
-            }
 
             #[test]
             fn test_len_empty() {
