@@ -456,7 +456,7 @@ mod lib {
         mod cmd {
             use super::*;
 
-            mod compute {
+            mod gate_pool {
                 use super::*;
 
                 macro_rules! num {
