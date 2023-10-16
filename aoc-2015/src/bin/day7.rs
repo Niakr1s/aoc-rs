@@ -90,10 +90,14 @@ mod lib {
         }
 
         pub fn get(&self, gate: &Gate) -> Result<u16, ComputeError> {
-            self.gates
+            let op = self
+                .gates
                 .get(gate)
-                .ok_or(ComputeError::GateNotFound(gate.clone()))?
-                .compute(&self)
+                .ok_or(ComputeError::GateNotFound(gate.clone()))?;
+            println!("BEG: {:?} {:?}", gate, op);
+            let res = op.compute(&self);
+            println!("END: {:?} {:?} => {res:?}", gate, op);
+            res
         }
 
         pub fn set(&mut self, wire: Cmd) {
