@@ -7,5 +7,5 @@ pub enum Error {
     #[error("Parse error: {0}")]
     Parse(#[from] wiring::from_str::ParseError),
     #[error("Circuit compute error: {0}")]
-    Compute(circuit::ComputeError),
+    Compute(#[from] circuit::ComputeError),
 }

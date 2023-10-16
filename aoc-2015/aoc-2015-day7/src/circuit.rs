@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::wiring::{Gate, GateOrNumber, Number, Op, Wire};
 
+#[derive(Clone)]
 pub struct Circuit {
     gates: HashMap<Gate, Op>,
 }
