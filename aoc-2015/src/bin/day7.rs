@@ -26,12 +26,6 @@ fn run(filepath: PathBuf) -> Result<(), error::Error> {
     Ok(())
 }
 
-#[test]
-fn test_run() {
-    let filepath: PathBuf = std::path::PathBuf::from("d:/download/2015-day7.txt");
-    run(filepath).unwrap();
-}
-
 mod error {
     use crate::lib;
 
@@ -527,10 +521,11 @@ mod lib {
                     let (x, y) = (0b0101, 0b1011);
                     pool.set(num!("x", x));
                     pool.set(num!("y", y));
-                    let cmd: Cmd = "x AND y -> x".parse().unwrap();
+                    let cmd: Cmd = "x AND y -> z".parse().unwrap();
                     pool.set(cmd);
-                    assert_eq!(pool.gates.len(), 2);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b0001);
+                    assert_eq!(pool.gates.len(), 3);
+                    assert_eq!(pool.get(&"z".into()).unwrap(), 0b0001);
+                    assert_eq!(pool.get(&"x".into()).unwrap(), x);
                     assert_eq!(pool.get(&"y".into()).unwrap(), y);
                 }
 
@@ -540,10 +535,11 @@ mod lib {
                     let (x, y) = (0b0101, 0b1010);
                     pool.set(num!("x", x));
                     pool.set(num!("y", y));
-                    let cmd: Cmd = "x OR y -> x".parse().unwrap();
+                    let cmd: Cmd = "x OR y -> z".parse().unwrap();
                     pool.set(cmd);
-                    assert_eq!(pool.gates.len(), 2);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b1111);
+                    assert_eq!(pool.gates.len(), 3);
+                    assert_eq!(pool.get(&"z".into()).unwrap(), 0b1111);
+                    assert_eq!(pool.get(&"x".into()).unwrap(), x);
                     assert_eq!(pool.get(&"y".into()).unwrap(), y);
                 }
 
@@ -552,10 +548,10 @@ mod lib {
                     let mut pool = GatePool::new();
                     let x = 0b0101;
                     pool.set(num!("x", x));
-                    let cmd: Cmd = "x LSHIFT 1 -> x".parse().unwrap();
+                    let cmd: Cmd = "x LSHIFT 1 -> y".parse().unwrap();
                     pool.set(cmd);
-                    assert_eq!(pool.gates.len(), 1);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b1010);
+                    assert_eq!(pool.gates.len(), 2);
+                    assert_eq!(pool.get(&"y".into()).unwrap(), 0b1010);
                 }
 
                 #[test]
@@ -563,10 +559,10 @@ mod lib {
                     let mut pool = GatePool::new();
                     let x = 0b0101;
                     pool.set(num!("x", x));
-                    let cmd: Cmd = "x RSHIFT 1 -> x".parse().unwrap();
+                    let cmd: Cmd = "x RSHIFT 1 -> z".parse().unwrap();
                     pool.set(cmd);
-                    assert_eq!(pool.gates.len(), 1);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b0010);
+                    assert_eq!(pool.gates.len(), 2);
+                    assert_eq!(pool.get(&"z".into()).unwrap(), 0b0010);
                 }
 
                 #[test]
@@ -574,10 +570,10 @@ mod lib {
                     let mut pool = GatePool::new();
                     let x = 0b0101;
                     pool.set(num!("x", x));
-                    let cmd: Cmd = "NOT x -> x".parse().unwrap();
+                    let cmd: Cmd = "NOT x -> z".parse().unwrap();
                     pool.set(cmd);
-                    assert_eq!(pool.gates.len(), 1);
-                    assert_eq!(pool.get(&"x".into()).unwrap(), 0b1111_1111_1111_1010);
+                    assert_eq!(pool.gates.len(), 2);
+                    assert_eq!(pool.get(&"z".into()).unwrap(), 0b1111_1111_1111_1010);
                 }
             }
 
