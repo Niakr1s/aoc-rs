@@ -150,7 +150,7 @@ mod lib {
     #[derive(Debug, PartialEq)]
     struct BinaryOp {
         kind: BinaryOpKind,
-        lhs: Gate,
+        lhs: GateOrNumber,
         rhs: Gate,
     }
 
@@ -164,7 +164,7 @@ mod lib {
     impl UnaryOpKind {
         fn compute(&self, num: u16) -> u16 {
             match self {
-                UnaryOpKind::Not => !num, // TODO
+                UnaryOpKind::Not => !num,
             }
         }
     }
@@ -197,6 +197,21 @@ mod lib {
         }
     }
 
+    impl GateOrNumber {
+        fn get_from_pool(&self, pool: &GatePool) -> Result<u16, ComputeError> {
+            match self {
+                GateOrNumber::Gate(gate) => pool.get(gate),
+                GateOrNumber::Number(num) => Ok(num.0),
+            }
+        }
+    }
+
+    impl Gate {
+        fn get_from_pool(&self, pool: &GatePool) -> Result<u16, ComputeError> {
+            pool.get(self)
+        }
+    }
+
     impl UnaryOp {
         fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
             let num = pool.get(&self.gate)?;
@@ -206,8 +221,8 @@ mod lib {
 
     impl BinaryOp {
         fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
-            let lhs = pool.get(&self.lhs)?;
-            let rhs = pool.get(&self.rhs)?;
+            let lhs = self.lhs.get_from_pool(pool)?;
+            let rhs = self.rhs.get_from_pool(pool)?;
             Ok(self.kind.compute(lhs, rhs))
         }
     }
@@ -221,7 +236,6 @@ mod lib {
 
     impl Op {
         fn compute(&self, pool: &GatePool) -> Result<u16, ComputeError> {
-            println!("{:?}", self);
             let res = match self {
                 Op::GateOrNumber(gate_or_num) => match gate_or_num {
                     GateOrNumber::Gate(gate) => pool.get(gate)?,
@@ -398,7 +412,7 @@ mod lib {
                     string: s.to_owned(),
                 });
             }
-            let gate: Gate = splitted[0].parse()?;
+            let gate: GateOrNumber = splitted[0].parse()?;
             let kind: BinaryOpKind = splitted[1].parse()?;
             let rgate: Gate = splitted[2].parse()?;
             Ok(BinaryOp {
@@ -560,7 +574,7 @@ mod lib {
                         cmd.op,
                         Op::Binary(BinaryOp {
                             kind: BinaryOpKind::And,
-                            lhs: Gate("x".to_owned()),
+                            lhs: GateOrNumber::Gate(Gate("x".to_owned())),
                             rhs: Gate("y".to_owned()),
                         })
                     );
@@ -574,7 +588,7 @@ mod lib {
                         cmd.op,
                         Op::Binary(BinaryOp {
                             kind: BinaryOpKind::Or,
-                            lhs: Gate("x".to_owned()),
+                            lhs: GateOrNumber::Gate(Gate("x".to_owned())),
                             rhs: Gate("y".to_owned()),
                         })
                     );
