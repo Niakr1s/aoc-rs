@@ -1,4 +1,4 @@
-use crate::{circuit::ComputeError, ops::from_str::ParseError};
+use crate::{circuit::ComputeError, wiring::from_str::ParseError};
 
 #[derive(Debug)]
 pub enum Error {

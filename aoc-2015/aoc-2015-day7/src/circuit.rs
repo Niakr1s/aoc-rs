@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::ops::{Gate, GateOrNumber, Number, Op, Wire};
+use crate::wiring::{Gate, GateOrNumber, Number, Op, Wire};
 
 pub struct Circuit {
     gates: HashMap<Gate, Op>,

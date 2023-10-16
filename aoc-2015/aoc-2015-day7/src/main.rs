@@ -1,6 +1,6 @@
 use std::{io::BufRead, path::PathBuf};
 
-use aoc_2015_day7::{circuit::Circuit, error, ops::Wire};
+use aoc_2015_day7::{circuit::Circuit, error, wiring::Wire};
 
 fn main() -> Result<(), error::Error> {
     let filepath: PathBuf = std::env::args()
