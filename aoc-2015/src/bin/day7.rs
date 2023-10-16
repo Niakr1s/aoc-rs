@@ -139,23 +139,23 @@ mod lib {
     }
 
     #[derive(Debug, PartialEq)]
-    struct Number(u16);
+    pub struct Number(u16);
 
     #[derive(Debug, PartialEq)]
-    struct UnaryOp {
+    pub struct UnaryOp {
         kind: UnaryOpKind,
         gate: Gate,
     }
 
     #[derive(Debug, PartialEq)]
-    struct BinaryOp {
+    pub struct BinaryOp {
         kind: BinaryOpKind,
         lhs: GateOrNumber,
         rhs: Gate,
     }
 
     #[derive(Debug, PartialEq)]
-    struct ShiftOp {
+    pub struct ShiftOp {
         kind: ShiftOpKind,
         lhs: Gate,
         rhs: Number,
@@ -188,10 +188,6 @@ mod lib {
     }
 
     impl Number {
-        fn new(num: u16) -> Self {
-            Self(num)
-        }
-
         fn compute(&self) -> u16 {
             self.0
         }
@@ -251,8 +247,8 @@ mod lib {
 
     #[derive(Debug)]
     pub struct ParseError {
-        kind: ParseErrorKind,
-        string: String,
+        pub kind: ParseErrorKind,
+        pub string: String,
     }
 
     #[derive(Debug)]
