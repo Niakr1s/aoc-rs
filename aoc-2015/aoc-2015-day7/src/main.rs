@@ -1,6 +1,6 @@
 use std::{io::BufRead, path::PathBuf};
 
-use aoc_2015_day7::{error, gate_pool::GatePool, ops::Cmd};
+use aoc_2015_day7::{circuit::Circuit, error, ops::Cmd};
 
 fn main() -> Result<(), error::Error> {
     let filepath: PathBuf = std::env::args()
@@ -15,13 +15,16 @@ fn run(filepath: PathBuf) -> Result<(), error::Error> {
     let file = std::fs::File::open(filepath)?;
     let reader = std::io::BufReader::new(file);
 
-    let mut pool = GatePool::new();
+    let mut circuit = Circuit::new();
     for line in reader.lines() {
         let line = line?;
         let wire: Cmd = line.parse()?;
-        pool.set(wire);
+        circuit.set(wire);
     }
-    println!("Part1: contents of a is {}", pool.get(&"a".into()).unwrap());
+    println!(
+        "Part1: contents of a is {}",
+        circuit.get(&"a".into()).unwrap()
+    );
 
     Ok(())
 }

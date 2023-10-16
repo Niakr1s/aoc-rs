@@ -1,17 +1,17 @@
-use crate::gate_pool::{ComputeError, GatePool};
+use crate::circuit::{Circuit, ComputeError};
 
 use super::*;
 
 impl Gate {
-    fn get_from_pool(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
-        pool.get(self)
+    fn get_from_circuit(&self, circuit: &mut Circuit) -> Result<u16, ComputeError> {
+        circuit.get(self)
     }
 }
 
 impl GateOrNumber {
-    fn get_from_pool(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
+    fn get_from_circuit(&self, circuit: &mut Circuit) -> Result<u16, ComputeError> {
         match self {
-            GateOrNumber::Gate(gate) => pool.get(gate),
+            GateOrNumber::Gate(gate) => circuit.get(gate),
             GateOrNumber::Number(num) => Ok(num.0),
         }
     }
@@ -50,37 +50,37 @@ impl ShiftOpKind {
 }
 
 impl UnaryOp {
-    fn compute(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
-        let num = pool.get(&self.gate)?;
+    fn compute(&self, circuit: &mut Circuit) -> Result<u16, ComputeError> {
+        let num = circuit.get(&self.gate)?;
         Ok(self.kind.compute(num))
     }
 }
 
 impl BinaryOp {
-    fn compute(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
-        let lhs = self.lhs.get_from_pool(pool)?;
-        let rhs = self.rhs.get_from_pool(pool)?;
+    fn compute(&self, circuit: &mut Circuit) -> Result<u16, ComputeError> {
+        let lhs = self.lhs.get_from_circuit(circuit)?;
+        let rhs = self.rhs.get_from_circuit(circuit)?;
         Ok(self.kind.compute(lhs, rhs))
     }
 }
 
 impl ShiftOp {
-    fn compute(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
-        let lhs = pool.get(&self.lhs)?;
+    fn compute(&self, circuit: &mut Circuit) -> Result<u16, ComputeError> {
+        let lhs = circuit.get(&self.lhs)?;
         Ok(self.kind.compute(lhs, self.rhs.0))
     }
 }
 
 impl Op {
-    pub fn compute(&self, pool: &mut GatePool) -> Result<u16, ComputeError> {
+    pub fn compute(&self, circuit: &mut Circuit) -> Result<u16, ComputeError> {
         let res = match self {
             Op::GateOrNumber(gate_or_num) => match gate_or_num {
-                GateOrNumber::Gate(gate) => pool.get(gate)?,
+                GateOrNumber::Gate(gate) => circuit.get(gate)?,
                 GateOrNumber::Number(num) => num.compute(),
             },
-            Op::Unary(op) => op.compute(pool)?,
-            Op::Binary(op) => op.compute(pool)?,
-            Op::Shift(op) => op.compute(pool)?,
+            Op::Unary(op) => op.compute(circuit)?,
+            Op::Binary(op) => op.compute(circuit)?,
+            Op::Shift(op) => op.compute(circuit)?,
         };
         Ok(res)
     }
