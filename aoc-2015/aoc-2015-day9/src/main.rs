@@ -15,6 +15,6 @@ fn main() {
     let graph = Graph::from_vec(&edges);
 
     let paths = graph.get_all_paths();
-    let shortest = paths.shortest().unwrap();
-    println!("shortest dist: {}", shortest.dist());
+    println!("Part1: shortest dist: {}", paths.shortest().unwrap().dist());
+    println!("Part2: longest dist: {}", paths.longest().unwrap().dist());
 }

@@ -136,6 +136,10 @@ impl Paths {
     pub fn shortest(&self) -> Option<&Path> {
         self.0.iter().min_by(|&a, &b| a.dist().cmp(&b.dist()))
     }
+
+    pub fn longest(&self) -> Option<&Path> {
+        self.0.iter().max_by(|&a, &b| a.dist().cmp(&b.dist()))
+    }
 }
 
 #[cfg(test)]
