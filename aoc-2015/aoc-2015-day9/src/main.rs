@@ -1,6 +1,6 @@
 use std::io::BufRead;
 
-use aoc_2015_day9::graph::{dist, shortest, Edge, Graph};
+use aoc_2015_day9::graph::{Edge, Graph};
 
 fn main() {
     let filepath = helpers::get_filepath_from_args();
@@ -16,6 +16,6 @@ fn main() {
     }
 
     let paths = graph.get_all_paths();
-    let shortest = shortest(&paths).unwrap();
-    println!("shortest dist: {}", dist(shortest));
+    let shortest = paths.shortest().unwrap();
+    println!("shortest dist: {}", shortest.dist());
 }

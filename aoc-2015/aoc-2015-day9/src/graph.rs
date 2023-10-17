@@ -6,8 +6,29 @@ pub enum PathItem {
     Edge(u32),
 }
 
-pub type Path = Vec<PathItem>;
-pub type Paths = Vec<Path>;
+#[derive(
+    Debug,
+    PartialEq,
+    derive_more::From,
+    derive_more::AsMut,
+    derive_more::Deref,
+    derive_more::DerefMut,
+    derive_more::Index,
+    derive_more::IndexMut,
+)]
+pub struct Path(Vec<PathItem>);
+
+#[derive(
+    Debug,
+    PartialEq,
+    derive_more::From,
+    derive_more::AsMut,
+    derive_more::Deref,
+    derive_more::DerefMut,
+    derive_more::Index,
+    derive_more::IndexMut,
+)]
+pub struct Paths(Vec<Path>);
 
 #[derive(Debug, PartialEq)]
 pub struct Edge {
@@ -50,7 +71,7 @@ impl Graph {
         for from in self.map.keys() {
             res.append(self.get_paths(from.as_str()).unwrap().as_mut());
         }
-        res
+        Paths(res)
     }
 
     pub fn get_paths(&self, from: &str) -> Result<Paths, GraphError> {
@@ -71,34 +92,38 @@ impl Graph {
             if !visited.contains(to) {
                 let paths = self.get_paths_(to, visited.clone())?;
 
-                if paths.len() == 0 {
+                if paths.0.len() == 0 {
                     let mut path = head.clone();
                     path.push(PathItem::Vertex(to.to_owned()));
-                    res.push(path);
+                    res.push(Path(path));
                 } else {
-                    for mut tail in paths {
+                    for mut tail in paths.0 {
                         let mut path = head.clone();
-                        path.append(&mut tail);
-                        res.push(path);
+                        path.append(&mut tail.0);
+                        res.push(Path(path));
                     }
                 }
             }
         }
-        Ok(res)
+        Ok(Paths(res))
     }
 }
 
-pub fn dist(path: &Path) -> u32 {
-    path.iter().fold(0, |mut acc, item| {
-        if let PathItem::Edge(dist) = item {
-            acc += *dist;
-        }
-        acc
-    })
+impl Path {
+    pub fn dist(&self) -> u32 {
+        self.0.iter().fold(0, |mut acc, item| {
+            if let PathItem::Edge(dist) = item {
+                acc += *dist;
+            }
+            acc
+        })
+    }
 }
 
-pub fn shortest(paths: &Paths) -> Option<&Path> {
-    paths.iter().min_by(|&a, &b| dist(a).cmp(&dist(b)))
+impl Paths {
+    pub fn shortest(&self) -> Option<&Path> {
+        self.0.iter().min_by(|&a, &b| a.dist().cmp(&b.dist()))
+    }
 }
 
 #[cfg(test)]
@@ -110,7 +135,7 @@ mod tests {
 
         #[test]
         fn test_dist() {
-            let path: Path = vec![
+            let path: Path = Path(vec![
                 PathItem::Vertex("A".to_owned()),
                 PathItem::Edge(1),
                 PathItem::Vertex("B".to_owned()),
@@ -118,8 +143,8 @@ mod tests {
                 PathItem::Vertex("C".to_owned()),
                 PathItem::Edge(5),
                 PathItem::Vertex("D".to_owned()),
-            ];
-            assert_eq!(dist(&path), 8);
+            ]);
+            assert_eq!(path.dist(), 8);
         }
     }
 
@@ -127,13 +152,13 @@ mod tests {
         use super::*;
 
         #[test]
-        fn test_dist() {
-            let path1: Path = vec![PathItem::Edge(1), PathItem::Edge(2), PathItem::Edge(5)];
-            let path2: Path = vec![PathItem::Edge(1), PathItem::Edge(3)];
-            let path3: Path = vec![PathItem::Edge(2), PathItem::Edge(5), PathItem::Edge(15)];
-            let paths = vec![path1, path2, path3];
+        fn test_shortest() {
+            let path1 = vec![PathItem::Edge(1), PathItem::Edge(2), PathItem::Edge(5)];
+            let path2 = vec![PathItem::Edge(1), PathItem::Edge(3)];
+            let path3 = vec![PathItem::Edge(2), PathItem::Edge(5), PathItem::Edge(15)];
+            let paths = Paths(vec![Path(path1), Path(path2), Path(path3)]);
 
-            assert_eq!(shortest(&paths), Some(&paths[1]));
+            assert_eq!(paths.shortest(), Some(&paths[1]));
         }
     }
 
