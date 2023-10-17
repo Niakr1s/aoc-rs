@@ -12,7 +12,7 @@ fn main() {
         .flat_map(|line| line.map(|line| Edge::from_str(&line)))
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
-    let graph = Graph::new(&edges);
+    let graph = Graph::from_vec(&edges);
 
     let paths = graph.get_all_paths();
     let shortest = paths.shortest().unwrap();

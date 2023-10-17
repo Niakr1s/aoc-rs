@@ -48,12 +48,14 @@ pub struct Graph<'a> {
 }
 
 impl<'a> Graph<'a> {
-    pub fn new(edges: &'a [Edge]) -> Graph {
-        let mut g = Graph {
+    pub fn new() -> Graph<'a> {
+        Graph {
             map: HashMap::new(),
-        };
-        edges.iter().for_each(|e| g.add_edge(e));
-        g
+        }
+    }
+
+    pub fn from_vec(edges: &'a Vec<Edge>) -> Graph<'a> {
+        Graph::from_iter(edges.iter())
     }
 
     fn add_edge(&mut self, Edge { from, to, dist }: &'a Edge) {
@@ -108,6 +110,14 @@ impl<'a> Graph<'a> {
             }
         }
         Ok(Paths(res))
+    }
+}
+
+impl<'a> FromIterator<&'a Edge> for Graph<'a> {
+    fn from_iter<T: IntoIterator<Item = &'a Edge>>(iter: T) -> Self {
+        let mut graph = Graph::new();
+        iter.into_iter().for_each(|edge| graph.add_edge(edge));
+        graph
     }
 }
 
@@ -180,7 +190,7 @@ mod tests {
         #[test]
         fn get_all_paths_simple() {
             let edges: &[Edge] = &[E!("A", "B", 1)];
-            let graph = Graph::new(edges);
+            let graph = Graph::from_iter(edges.into_iter());
 
             let a_paths = graph.get_paths("A").unwrap();
             assert_eq!(a_paths.len(), 1);
@@ -201,7 +211,7 @@ mod tests {
                 E!("London", "Belfast", 518),
                 E!("Dublin", "Belfast", 141),
             ];
-            let graph = Graph::new(edges);
+            let graph = Graph::from_iter(edges.into_iter());
 
             let london_paths = graph.get_paths("London").unwrap();
             assert_eq!(london_paths.len(), 2);
