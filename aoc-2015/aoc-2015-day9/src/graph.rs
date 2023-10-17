@@ -43,23 +43,25 @@ pub enum GraphError {
     VertexNotFound(String),
 }
 
-pub struct Graph {
-    map: HashMap<String, HashMap<String, u32>>,
+pub struct Graph<'a> {
+    map: HashMap<&'a String, HashMap<&'a String, u32>>,
 }
 
-impl Graph {
-    pub fn new() -> Graph {
-        Graph {
+impl<'a> Graph<'a> {
+    pub fn new(edges: &'a [Edge]) -> Graph {
+        let mut g = Graph {
             map: HashMap::new(),
-        }
+        };
+        edges.iter().for_each(|e| g.add_edge(e));
+        g
     }
 
-    pub fn add_edge(&mut self, Edge { from, to, dist }: Edge) {
-        self.add_single_edge(from.clone(), to.clone(), dist);
-        self.add_single_edge(to, from, dist);
+    fn add_edge(&mut self, Edge { from, to, dist }: &'a Edge) {
+        self.add_single_edge(from, to, *dist);
+        self.add_single_edge(to, from, *dist);
     }
 
-    fn add_single_edge(&mut self, from: String, to: String, dist: u32) {
+    fn add_single_edge(&mut self, from: &'a String, to: &'a String, dist: u32) {
         self.map
             .entry(from)
             .or_insert(HashMap::new())
@@ -68,17 +70,17 @@ impl Graph {
 
     pub fn get_all_paths(&self) -> Paths {
         let mut res = Vec::new();
-        for from in self.map.keys() {
+        for &from in self.map.keys() {
             res.append(self.get_paths(from.as_str()).unwrap().as_mut());
         }
         Paths(res)
     }
 
     pub fn get_paths(&self, from: &str) -> Result<Paths, GraphError> {
-        self.get_paths_(from, HashSet::new())
+        self.get_paths_(&from.to_owned(), HashSet::new())
     }
 
-    fn get_paths_(&self, from: &str, mut visited: HashSet<String>) -> Result<Paths, GraphError> {
+    fn get_paths_(&self, from: &String, mut visited: HashSet<String>) -> Result<Paths, GraphError> {
         visited.insert(from.to_owned());
 
         let edges = self
@@ -87,7 +89,7 @@ impl Graph {
             .ok_or(GraphError::VertexNotFound(from.to_owned()))?;
 
         let mut res = Vec::new();
-        for (to, dist) in edges {
+        for (&to, dist) in edges {
             let head = vec![PathItem::Vertex(from.to_owned()), PathItem::Edge(*dist)];
             if !visited.contains(to) {
                 let paths = self.get_paths_(to, visited.clone())?;
@@ -177,10 +179,8 @@ mod tests {
 
         #[test]
         fn get_all_paths_simple() {
-            let mut graph = Graph::new();
-            graph.add_edge(E!("A", "B", 1));
-            assert_eq!(graph.map.get("A").unwrap().get("B").unwrap(), &1);
-            assert_eq!(graph.map.get("B").is_some(), true);
+            let edges: &[Edge] = &[E!("A", "B", 1)];
+            let graph = Graph::new(edges);
 
             let a_paths = graph.get_paths("A").unwrap();
             assert_eq!(a_paths.len(), 1);
@@ -196,10 +196,12 @@ mod tests {
 
         #[test]
         fn get_all_paths_from_website() {
-            let mut graph = Graph::new();
-            graph.add_edge(E!("London", "Dublin", 464));
-            graph.add_edge(E!("London", "Belfast", 518));
-            graph.add_edge(E!("Dublin", "Belfast", 141));
+            let edges: &[Edge] = &[
+                E!("London", "Dublin", 464),
+                E!("London", "Belfast", 518),
+                E!("Dublin", "Belfast", 141),
+            ];
+            let graph = Graph::new(edges);
 
             let london_paths = graph.get_paths("London").unwrap();
             assert_eq!(london_paths.len(), 2);
