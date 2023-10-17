@@ -130,11 +130,11 @@ impl Paths {
 mod tests {
     use super::*;
 
-    mod dist {
+    mod path {
         use super::*;
 
         #[test]
-        fn test_dist() {
+        fn dist() {
             let path: Path = Path(vec![
                 PathItem::Vertex("A".to_owned()),
                 PathItem::Edge(1),
@@ -148,11 +148,11 @@ mod tests {
         }
     }
 
-    mod shortest {
+    mod paths {
         use super::*;
 
         #[test]
-        fn test_shortest() {
+        fn shortest() {
             let path1 = vec![PathItem::Edge(1), PathItem::Edge(2), PathItem::Edge(5)];
             let path2 = vec![PathItem::Edge(1), PathItem::Edge(3)];
             let path3 = vec![PathItem::Edge(2), PathItem::Edge(5), PathItem::Edge(15)];
@@ -176,7 +176,7 @@ mod tests {
         }
 
         #[test]
-        fn test_get_all_paths_simple() {
+        fn get_all_paths_simple() {
             let mut graph = Graph::new();
             graph.add_edge(E!("A", "B", 1));
             assert_eq!(graph.map.get("A").unwrap().get("B").unwrap(), &1);
@@ -195,7 +195,7 @@ mod tests {
         }
 
         #[test]
-        fn test_get_all_paths_from_website() {
+        fn get_all_paths_from_website() {
             let mut graph = Graph::new();
             graph.add_edge(E!("London", "Dublin", 464));
             graph.add_edge(E!("London", "Belfast", 518));
@@ -256,43 +256,47 @@ mod from_str {
     }
 
     #[cfg(test)]
-    mod test_from_str_edge {
+    mod tests {
         use super::*;
 
-        #[test]
-        fn test_valid_1() {
-            assert_eq!(
-                Edge::from_str("London to Dublin = 464").unwrap(),
-                Edge {
-                    from: "London".to_owned(),
-                    to: "Dublin".to_owned(),
-                    dist: 464,
-                }
-            );
-        }
+        mod edge {
+            use super::*;
 
-        #[test]
-        #[should_panic]
-        fn test_invalid_1() {
-            Edge::from_str("London Dublin = 464").unwrap();
-        }
+            #[test]
+            fn valid_1() {
+                assert_eq!(
+                    Edge::from_str("London to Dublin = 464").unwrap(),
+                    Edge {
+                        from: "London".to_owned(),
+                        to: "Dublin".to_owned(),
+                        dist: 464,
+                    }
+                );
+            }
 
-        #[test]
-        #[should_panic]
-        fn test_invalid_2() {
-            Edge::from_str("London to = 464").unwrap();
-        }
+            #[test]
+            #[should_panic]
+            fn invalid_1() {
+                Edge::from_str("London Dublin = 464").unwrap();
+            }
 
-        #[test]
-        #[should_panic]
-        fn test_invalid_3() {
-            Edge::from_str("to Dublin = 464").unwrap();
-        }
+            #[test]
+            #[should_panic]
+            fn invalid_2() {
+                Edge::from_str("London to = 464").unwrap();
+            }
 
-        #[test]
-        #[should_panic]
-        fn test_invalid_4() {
-            Edge::from_str("London to Dublin = ").unwrap();
+            #[test]
+            #[should_panic]
+            fn invalid_3() {
+                Edge::from_str("to Dublin = 464").unwrap();
+            }
+
+            #[test]
+            #[should_panic]
+            fn invalid_4() {
+                Edge::from_str("London to Dublin = ").unwrap();
+            }
         }
     }
 }
