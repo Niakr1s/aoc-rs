@@ -159,6 +159,14 @@ impl Paths {
     pub fn longest(&self) -> Option<&Path> {
         self.0.iter().max_by(|&a, &b| a.dist().cmp(&b.dist()))
     }
+
+    pub fn sort_by_dist(&mut self) {
+        self.sort_by_key(|path| (path.dist(), path.len()));
+    }
+
+    pub fn sort_by_len(&mut self) {
+        self.sort_by_key(|path| (path.len(), path.dist()));
+    }
 }
 
 #[cfg(test)]
@@ -194,6 +202,28 @@ mod tests {
             let paths = Paths(vec![Path(path1), Path(path2), Path(path3)]);
 
             assert_eq!(paths.shortest(), Some(&paths[1]));
+        }
+
+        #[test]
+        fn sort_by_dist() {
+            let path1 = vec![PathItem::Edge(5)];
+            let path2 = vec![PathItem::Edge(1), PathItem::Edge(1), PathItem::Edge(1)];
+
+            let mut paths = Paths(vec![Path(path1), Path(path2)]);
+            paths.sort_by_dist();
+            assert_eq!(paths[0].dist(), 3);
+            assert_eq!(paths[1].dist(), 5);
+        }
+
+        #[test]
+        fn sort_by_len() {
+            let path2 = vec![PathItem::Edge(1), PathItem::Edge(1), PathItem::Edge(1)];
+            let path1 = vec![PathItem::Edge(5)];
+
+            let mut paths = Paths(vec![Path(path1), Path(path2)]);
+            paths.sort_by_len();
+            assert_eq!(paths[0].len(), 1);
+            assert_eq!(paths[1].len(), 3);
         }
     }
 
