@@ -1,6 +1,6 @@
 use std::{collections::HashMap, io::BufRead, str::FromStr};
 
-use aoc_2015_day9::graph::{self, Edge};
+use aoc_2015_day9::my_graph;
 use petgraph::{algo, prelude::*};
 
 fn main() {
@@ -10,7 +10,7 @@ fn main() {
 
     let edges = reader
         .lines()
-        .flat_map(|line| line.map(|line| Edge::from_str(&line)))
+        .flat_map(|line| line.map(|line| my_graph::Edge::from_str(&line)))
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
@@ -19,8 +19,8 @@ fn main() {
     }
 }
 
-fn run_my(edges: &Vec<Edge>) -> (Option<u32>, Option<u32>) {
-    let graph = graph::Graph::from_vec(edges);
+fn run_my(edges: &Vec<my_graph::Edge>) -> (Option<u32>, Option<u32>) {
+    let graph = my_graph::Graph::from_vec(edges);
 
     let mut paths = graph.get_all_paths();
     paths.sort_by_dist();
@@ -31,7 +31,7 @@ fn run_my(edges: &Vec<Edge>) -> (Option<u32>, Option<u32>) {
     )
 }
 
-fn run_petagraph(edges: &Vec<Edge>) -> (Option<u32>, Option<u32>) {
+fn run_petagraph(edges: &Vec<my_graph::Edge>) -> (Option<u32>, Option<u32>) {
     let mut graph = petgraph::graph::UnGraph::<String, u32>::new_undirected();
 
     let mut edges_map: HashMap<&str, NodeIndex<u32>> = HashMap::new();
@@ -45,7 +45,7 @@ fn run_petagraph(edges: &Vec<Edge>) -> (Option<u32>, Option<u32>) {
             .or_insert_with(|| graph.add_node(edge.to.clone()));
     }
 
-    for Edge { from, to, dist } in edges {
+    for my_graph::Edge { from, to, dist } in edges {
         graph.update_edge(
             *edges_map.get(from.as_str()).unwrap(),
             *edges_map.get(to.as_str()).unwrap(),
