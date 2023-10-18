@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PathItem {
     Vertex(String),
     Edge(u32),
@@ -9,6 +9,9 @@ pub enum PathItem {
 #[derive(
     Debug,
     PartialEq,
+    Clone,
+    Eq,
+    Hash,
     derive_more::From,
     derive_more::AsMut,
     derive_more::Deref,
@@ -166,6 +169,28 @@ impl Paths {
 
     pub fn sort_by_len(&mut self) {
         self.sort_by_key(|path| (path.len(), path.dist()));
+    }
+}
+
+impl std::fmt::Display for Path {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let items = self
+            .iter()
+            .map(|item| match item {
+                PathItem::Vertex(v) => v.to_owned(),
+                PathItem::Edge(e) => e.to_string(),
+            })
+            .collect::<Vec<_>>();
+        write!(f, "{}", items.join(" -> "))
+    }
+}
+
+impl std::fmt::Display for Paths {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for path in self.0.iter() {
+            writeln!(f, "{}", path)?;
+        }
+        Ok(())
     }
 }
 
