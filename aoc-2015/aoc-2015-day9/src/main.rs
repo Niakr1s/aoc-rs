@@ -24,7 +24,7 @@ fn run_my(edges: &Vec<Edge>) -> (Option<u32>, Option<u32>) {
 
     let mut paths = graph.get_all_paths();
     paths.sort_by_dist();
-    println!("paths found: {}", paths.len());
+
     (
         paths.first().map(|path| path.dist()),
         paths.last().map(|path| path.dist()),
@@ -35,6 +35,7 @@ fn run_petagraph(edges: &Vec<Edge>) -> (Option<u32>, Option<u32>) {
     let mut graph = petgraph::graph::UnGraph::<String, u32>::new_undirected();
 
     let mut edges_map: HashMap<&str, NodeIndex<u32>> = HashMap::new();
+
     for edge in edges {
         edges_map
             .entry(&edge.from)
@@ -44,41 +45,33 @@ fn run_petagraph(edges: &Vec<Edge>) -> (Option<u32>, Option<u32>) {
             .or_insert_with(|| graph.add_node(edge.to.clone()));
     }
 
-    let edges = edges
-        .iter()
-        .map(|Edge { from, to, dist }| {
-            (
-                edges_map.get(from.as_str()).unwrap(),
-                edges_map.get(to.as_str()).unwrap(),
-                dist,
-            )
-        })
-        .collect::<Vec<_>>();
-
-    for (&from, &to, &dist) in edges {
-        graph.update_edge(from, to, dist);
+    for Edge { from, to, dist } in edges {
+        graph.update_edge(
+            *edges_map.get(from.as_str()).unwrap(),
+            *edges_map.get(to.as_str()).unwrap(),
+            *dist,
+        );
     }
-
-    println!("{:?}", graph);
 
     let (mut shortest, mut largest): (Option<u32>, Option<u32>) = (None, None);
 
-    let mut n = 0;
-
     let edges = edges_map.drain().collect::<Vec<_>>();
+    let wanted_intermediate_nodes = edges.len() - 2;
     for from_idx in 0..edges.len() {
-        let from = edges[from_idx];
+        let from = edges[from_idx].1;
+
         for to_idx in from_idx + 1..edges.len() {
-            let to = edges[to_idx];
+            let to = edges[to_idx].1;
+
             let paths = algo::all_simple_paths::<Vec<_>, _>(
                 &graph,
-                from.1,
-                to.1,
-                edges.len() - 2,
-                Some(edges.len() - 2),
+                from,
+                to,
+                wanted_intermediate_nodes,
+                Some(wanted_intermediate_nodes),
             )
             .collect::<Vec<_>>();
-            n += paths.len();
+
             for path in paths {
                 let dist = path.windows(2).fold(0, |acc, item| {
                     let (a, b) = (item[0], item[1]);
@@ -90,6 +83,5 @@ fn run_petagraph(edges: &Vec<Edge>) -> (Option<u32>, Option<u32>) {
             }
         }
     }
-    println!("paths found: {}", n);
     (shortest, largest)
 }
