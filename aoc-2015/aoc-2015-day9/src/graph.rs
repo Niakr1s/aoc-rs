@@ -44,7 +44,7 @@ pub enum GraphError {
 }
 
 pub struct Graph<'a> {
-    map: HashMap<&'a String, HashMap<&'a String, u32>>,
+    map: HashMap<&'a str, HashMap<&'a str, u32>>,
 }
 
 impl<'a> Graph<'a> {
@@ -73,16 +73,25 @@ impl<'a> Graph<'a> {
     pub fn get_all_paths(&self) -> Paths {
         let mut res = Vec::new();
         for &from in self.map.keys() {
-            res.append(self.get_paths(from.as_str()).unwrap().as_mut());
+            res.append(self.get_paths(from).unwrap().as_mut());
         }
         Paths(res)
     }
 
     pub fn get_paths(&self, from: &str) -> Result<Paths, GraphError> {
-        self.get_paths_(&from.to_owned(), HashSet::new())
+        self.get_paths_to_inner(HashSet::new(), &from.to_owned(), None)
     }
 
-    fn get_paths_(&self, from: &String, mut visited: HashSet<String>) -> Result<Paths, GraphError> {
+    pub fn get_paths_to(&self, from: &str, to: &str) -> Result<Paths, GraphError> {
+        self.get_paths_to_inner(HashSet::new(), &from.to_owned(), None)
+    }
+
+    fn get_paths_to_inner(
+        &self,
+        mut visited: HashSet<String>,
+        from: &str,
+        to: Option<&str>,
+    ) -> Result<Paths, GraphError> {
         visited.insert(from.to_owned());
 
         let edges = self
@@ -94,7 +103,7 @@ impl<'a> Graph<'a> {
         for (&to, dist) in edges {
             let head = vec![PathItem::Vertex(from.to_owned()), PathItem::Edge(*dist)];
             if !visited.contains(to) {
-                let paths = self.get_paths_(to, visited.clone())?;
+                let paths = self.get_paths_to_inner(visited.clone(), to, None)?;
 
                 if paths.0.len() == 0 {
                     let mut path = head.clone();
