@@ -82,15 +82,21 @@ impl<'a> Graph<'a> {
         self.get_paths_to_inner(HashSet::new(), &from.to_owned(), None)
     }
 
-    pub fn get_paths_to(&self, from: &str, to: &str) -> Result<Paths, GraphError> {
-        self.get_paths_to_inner(HashSet::new(), &from.to_owned(), None)
+    pub fn get_paths_to(&self, from: &str, dest: &str) -> Result<Paths, GraphError> {
+        if !self.map.contains_key(dest) {
+            return Err(GraphError::VertexNotFound(dest.to_owned()));
+        }
+        self.get_paths_to_inner(HashSet::new(), &from.to_owned(), Some(dest))
     }
 
+    /// * `dest` -> Must be present in graph, othervise function will panic.
+    /// Caller must ensure of it before calling this function.
+    /// It's done to avoid checks for each iteration.
     fn get_paths_to_inner(
         &self,
         mut visited: HashSet<String>,
         from: &str,
-        to: Option<&str>,
+        dest: Option<&str>,
     ) -> Result<Paths, GraphError> {
         visited.insert(from.to_owned());
 
@@ -99,11 +105,15 @@ impl<'a> Graph<'a> {
             .get(from)
             .ok_or(GraphError::VertexNotFound(from.to_owned()))?;
 
+        if dest.is_some_and(|dest| from == dest) {
+            return Ok(Paths(vec![Path(vec![PathItem::Vertex(from.to_owned())])]));
+        }
+
         let mut res = Vec::new();
         for (&to, dist) in edges {
             let head = vec![PathItem::Vertex(from.to_owned()), PathItem::Edge(*dist)];
             if !visited.contains(to) {
-                let paths = self.get_paths_to_inner(visited.clone(), to, None)?;
+                let paths = self.get_paths_to_inner(visited.clone(), to, dest)?;
 
                 if paths.0.len() == 0 {
                     let mut path = head.clone();
@@ -234,6 +244,24 @@ mod tests {
 
             let belfast_paths = graph.get_paths("Belfast").unwrap();
             assert_eq!(belfast_paths.len(), 2);
+        }
+
+        #[test]
+        fn get_paths_to_1() {
+            let edges: &[Edge] = &[
+                E!("London", "Dublin", 464),
+                E!("London", "Belfast", 518),
+                E!("Dublin", "Belfast", 141),
+            ];
+            let graph = Graph::from_iter(edges.into_iter());
+
+            let mut paths: Paths = graph.get_paths_to("London", "Belfast").unwrap();
+            assert_eq!(paths.len(), 2);
+            paths.sort_by_key(|path| path.len());
+            assert_eq!(paths[0].len(), 3);
+            assert_eq!(paths[0].dist(), 518);
+            assert_eq!(paths[1].len(), 5);
+            assert_eq!(paths[1].dist(), 605);
         }
     }
 }
