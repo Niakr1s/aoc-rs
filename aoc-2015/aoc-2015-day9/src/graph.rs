@@ -35,9 +35,9 @@ pub struct Paths(Vec<Path>);
 
 #[derive(Debug, PartialEq)]
 pub struct Edge {
-    from: String,
-    to: String,
-    dist: u32,
+    pub from: String,
+    pub to: String,
+    pub dist: u32,
 }
 
 #[derive(Debug, thiserror::Error)]
