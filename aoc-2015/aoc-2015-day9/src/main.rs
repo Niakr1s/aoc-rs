@@ -14,9 +14,21 @@ fn main() {
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
-    for (i, (shortest, longest)) in [run_my(&edges), run_petagraph(&edges)].iter().enumerate() {
-        println!("[{i}] shortest: {:?}, longest: {:?}", shortest, longest);
-    }
+    run(&edges, run_my, "my");
+    run(&edges, run_petagraph, "pethagraph");
+}
+
+fn run(
+    edges: &Vec<my_graph::Edge>,
+    f: impl Fn(&Vec<my_graph::Edge>) -> (Option<u32>, Option<u32>),
+    description: &str,
+) {
+    let start = std::time::Instant::now();
+    let (shortest, longest) = f(edges);
+    println!(
+        "[{description}] took {:.2?}; shortest: {shortest:?}, longest: {longest:?}",
+        start.elapsed()
+    );
 }
 
 fn run_my(edges: &Vec<my_graph::Edge>) -> (Option<u32>, Option<u32>) {
