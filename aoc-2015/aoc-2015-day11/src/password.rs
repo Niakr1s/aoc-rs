@@ -160,6 +160,14 @@ mod tests {
                     "xza"
                 );
             }
+
+            #[test]
+            fn xyzz() {
+                assert_eq!(
+                    Password::new("xyzz".to_string()).unwrap().next().as_str(),
+                    "xzaa"
+                );
+            }
         }
     }
 }

@@ -10,5 +10,6 @@ fn run(pass: &str) {
         .next_password_iter()
         .filter(|p| SecurityElf::is_valid(p.as_str()));
 
-    println!("{}", iter.next().unwrap().as_str());
+    println!("Next: {}", iter.next().unwrap().as_str());
+    println!("Next: {}", iter.next().unwrap().as_str());
 }
