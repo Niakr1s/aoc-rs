@@ -32,9 +32,15 @@ pub fn contains_sequences(s: &str, len: usize, at_least: usize, overlap: bool) -
 }
 
 fn is_ordered(s: &[char], order: &Order) -> bool {
+    /// is_char_next('a', 'b') -> true
+    /// is_char_next('b', 'a') -> false
+    fn is_char_next(a: char, b: char) -> bool {
+        u32::from(b).checked_sub(u32::from(a)) == Some(1)
+    }
+
     s.windows(2).all(|w| match order {
-        Order::Asc => (w[1] as u32).checked_sub(w[0] as u32) == Some(1),
-        Order::Desc => (w[0] as u32).checked_sub(w[1] as u32) == Some(1),
+        Order::Asc => is_char_next(w[0], w[1]),
+        Order::Desc => is_char_next(w[1], w[0]),
     })
 }
 
