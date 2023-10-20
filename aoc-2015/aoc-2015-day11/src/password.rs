@@ -41,6 +41,7 @@ impl Password {
             'z' => (Self::incr(left), 'a'),
             'a'..='z' => (
                 Vec::from_iter(left.into_iter().copied()),
+                // it's safe to cast a..z to u8
                 ((last as u8) + 1) as char,
             ),
             _ => unreachable!("invalid char"),
