@@ -33,8 +33,8 @@ pub fn contains_sequences(s: &str, len: usize, at_least: usize, overlap: bool) -
 
 fn is_ordered(s: &[char], order: &Order) -> bool {
     s.windows(2).all(|w| match order {
-        Order::Asc => w[0] < w[1],
-        Order::Desc => w[1] < w[0],
+        Order::Asc => (w[1] as u32).checked_sub(w[0] as u32) == Some(1),
+        Order::Desc => (w[0] as u32).checked_sub(w[1] as u32) == Some(1),
     })
 }
 
@@ -100,28 +100,38 @@ mod tests {
         use super::*;
 
         #[test]
-        fn asc_true_1() {
+        fn abc() {
             assert!(contains_strait("abc", 3, &Order::Asc));
         }
 
         #[test]
-        fn asc_true_2() {
+        fn babczy() {
             assert!(contains_strait("babczy", 3, &Order::Asc));
         }
 
         #[test]
-        fn asc_true_3() {
+        fn babczydeff() {
             assert!(contains_strait("babczydeff", 3, &Order::Asc));
         }
 
         #[test]
-        fn asc_false_1() {
+        fn empty() {
             assert!(!contains_strait("", 3, &Order::Asc));
         }
 
         #[test]
-        fn asc_false_2() {
+        fn ab() {
             assert!(!contains_strait("ab", 3, &Order::Asc));
+        }
+
+        #[test]
+        fn abbceffg() {
+            assert!(!contains_strait("abbceffg", 3, &Order::Asc));
+        }
+
+        #[test]
+        fn abbcegjk() {
+            assert!(!contains_strait("abbcegjk", 3, &Order::Asc));
         }
     }
 }
