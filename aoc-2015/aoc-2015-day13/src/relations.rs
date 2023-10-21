@@ -113,26 +113,29 @@ pub mod relation {
         }
     }
     #[cfg(test)]
-
-    mod from_adventofcode_line {
+    mod tests {
         use super::*;
 
-        #[test]
-        fn alice_from_bob_plus_happiness() {
-            let line = "Alice would gain 54 happiness units by sitting next to Bob.";
-            let relation = Relation::from_adventofcode_line(line).unwrap();
-            assert_eq!(relation.to, "Alice");
-            assert_eq!(relation.from, "Bob");
-            assert_eq!(*relation.happiness, 54);
-        }
+        mod from_adventofcode_line {
+            use super::*;
 
-        #[test]
-        fn alice_from_bob_minus_happiness() {
-            let line = "Alice would lose 54 happiness units by sitting next to Bob.";
-            let relation = Relation::from_adventofcode_line(line).unwrap();
-            assert_eq!(relation.to, "Alice");
-            assert_eq!(relation.from, "Bob");
-            assert_eq!(*relation.happiness, -54);
+            #[test]
+            fn alice_from_bob_plus_happiness() {
+                let line = "Alice would gain 54 happiness units by sitting next to Bob.";
+                let relation = Relation::from_adventofcode_line(line).unwrap();
+                assert_eq!(relation.to, "Alice");
+                assert_eq!(relation.from, "Bob");
+                assert_eq!(*relation.happiness, 54);
+            }
+
+            #[test]
+            fn alice_from_bob_minus_happiness() {
+                let line = "Alice would lose 54 happiness units by sitting next to Bob.";
+                let relation = Relation::from_adventofcode_line(line).unwrap();
+                assert_eq!(relation.to, "Alice");
+                assert_eq!(relation.from, "Bob");
+                assert_eq!(*relation.happiness, -54);
+            }
         }
     }
 }
