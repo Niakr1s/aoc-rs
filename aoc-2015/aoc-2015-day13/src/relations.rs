@@ -31,7 +31,8 @@ impl Relations {
         }
     }
 
-    pub fn update_relation<S>(&mut self, relation: Relation<S>)
+    /// Returns (from, to) pair
+    pub fn update_relation<S>(&mut self, relation: Relation<S>) -> (Idx, Idx)
     where
         S: AsRef<str>,
     {
@@ -47,6 +48,7 @@ impl Relations {
             .entry(to)
             .or_default()
             .insert(from, happiness);
+        (from, to)
     }
 
     /// Adds participant if not exists
@@ -61,6 +63,41 @@ impl Relations {
 
     fn incr_next_idx(&mut self) {
         self.next_idx = Idx(self.next_idx.0 + 1);
+    }
+}
+
+pub mod relations {
+    use super::*;
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        mod update_relation {
+            use super::*;
+
+            #[test]
+            fn correctly_updates_relation() {
+                let mut relations = Relations::new();
+
+                let (from, to) = relations.update_relation(Relation {
+                    from: "Alice",
+                    to: "Bob",
+                    happiness: Happiness(54),
+                });
+                assert_eq!(relations.participants["Alice"], from);
+                assert_eq!(relations.participants["Bob"], to);
+                assert_eq!(*relations.relations[&to][&from], 54);
+                assert_eq!(relations.relations.contains_key(&from), false);
+
+                let (from, to) = relations.update_relation(Relation {
+                    from: "Alice",
+                    to: "Bob",
+                    happiness: Happiness(-33),
+                });
+                assert_eq!(*relations.relations[&to][&from], -33);
+            }
+        }
     }
 }
 
