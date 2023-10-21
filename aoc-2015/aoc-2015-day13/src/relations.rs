@@ -141,13 +141,13 @@ impl RelationMap {
     }
 }
 
-#[allow(unused_macros)]
+#[macro_export]
 macro_rules! rel {
     ($from:expr, $to:expr, $happiness:expr) => {
         Relation {
             from: $from,
             to: $to,
-            happiness: Happiness($happiness),
+            happiness: $crate::relations::Happiness($happiness),
         }
     };
 }

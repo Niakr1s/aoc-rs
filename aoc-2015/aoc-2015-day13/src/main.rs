@@ -1,6 +1,9 @@
 use std::io::BufRead;
 
-use aoc_2015_day13::relations::{Relation, RelationMap};
+use aoc_2015_day13::{
+    rel,
+    relations::{Relation, RelationMap},
+};
 use itertools::Itertools;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,8 +17,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let relation = Relation::from_adventofcode_line(&line)?;
         relation_map.update_relation(relation);
     }
-    let res = find_optimal_table_happiness(&relation_map)?;
-    println!("Part1: optimal happiness is {}", res);
+
+    let part1_res = find_optimal_table_happiness(&relation_map)?;
+    println!("Part1: optimal happiness is {}", part1_res);
+
+    seat_myself(&mut relation_map);
+    let part2_res = find_optimal_table_happiness(&relation_map)?;
+    println!("Part2: optimal happiness is {}", part2_res);
+
     Ok(())
 }
 
@@ -40,4 +49,15 @@ fn find_optimal_table_happiness(
         max = max.map_or(Some(*happiness), |x| Some(x.max(*happiness)));
     }
     Ok(max.unwrap_or_default())
+}
+
+fn seat_myself(relation_map: &mut RelationMap) {
+    const ME: &str = "Me";
+
+    let all = relation_map.participants().keys().cloned().collect_vec();
+
+    for participant in all {
+        relation_map.update_relation(rel!(participant.as_str(), ME, 0));
+        relation_map.update_relation(rel!(ME, participant.as_str(), 0));
+    }
 }
