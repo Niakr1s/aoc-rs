@@ -9,7 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let part1_res = summarize::count(&json)?;
     println!("Part 1: {}", part1_res);
 
-    let mut should_count = |v: &serde_json::Value| {
+    let should_count = |v: &serde_json::Value| {
         let mut should_skip = false;
         if let serde_json::Value::Object(o) = v {
             should_skip = o.values().any(|v| {
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         !should_skip
     };
 
-    let part2_res = summarize::count_if(&json, &mut should_count)?;
+    let part2_res = summarize::count_if(&json, should_count)?;
     println!("Part 2: {}", part2_res);
 
     Ok(())
