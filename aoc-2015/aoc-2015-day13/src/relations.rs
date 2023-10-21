@@ -1,4 +1,6 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+
+use itertools::Itertools;
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::From, derive_more::Deref,
@@ -51,6 +53,33 @@ impl Relations {
         (from, to)
     }
 
+    /// Each of n participants should have n-1 relations to others.
+    /// Zero participants also correct.
+    /// One participant should be incorrect, because we always add relation of
+    /// minimum 2 participants.
+    pub fn is_correct(&self) -> bool {
+        match self.participants.len() {
+            0 => self.relations.len() == 0,
+            1 => false,
+            _ => {
+                let (r, p) = (
+                    HashSet::<&Idx>::from_iter(self.relations.keys()),
+                    HashSet::<&Idx>::from_iter(self.participants.values()),
+                );
+                println!("{:?} {:?}", r, p);
+                if p.difference(&r).count() != 0 {
+                    return false;
+                }
+                self.relations.iter().all(|(to, from)| {
+                    let froms = HashSet::<&Idx>::from_iter(from.keys());
+                    let mut diff = p.difference(&froms);
+                    let has_to = diff.next() == Some(&&to);
+                    has_to && diff.next().is_none()
+                })
+            }
+        }
+    }
+
     /// Adds participant if not exists
     fn try_add_participant(&mut self, participant: &str) -> Idx {
         if !self.participants.contains_key(participant) {
@@ -82,6 +111,51 @@ pub mod relations {
     #[cfg(test)]
     mod tests {
         use super::*;
+
+        mod is_correct {
+            use super::*;
+
+            #[test]
+            fn zero_participants() {
+                let relations = Relations::new();
+                assert_eq!(relations.is_correct(), true);
+            }
+
+            #[test]
+            fn one_participant() {
+                // It's contrived example with accessing to private members, but let it be.
+                let mut relations = Relations::new();
+                relations.participants.insert("Bob".to_owned(), Idx(0));
+                relations.next_idx = Idx(1);
+                assert_eq!(relations.is_correct(), false);
+            }
+
+            #[test]
+            fn two_participants() {
+                let mut relations = Relations::new();
+                relations.update_relation(rel!("Alice", "Bob", 54));
+                assert_eq!(relations.is_correct(), false);
+                relations.update_relation(rel!("Bob", "Alice", -33));
+                assert_eq!(relations.is_correct(), true);
+            }
+
+            #[test]
+            fn three_participants() {
+                let mut relations = Relations::new();
+                relations.update_relation(rel!("Alice", "Bob", 54));
+                assert_eq!(relations.is_correct(), false);
+                relations.update_relation(rel!("Bob", "Alice", -33));
+                assert_eq!(relations.is_correct(), true);
+                relations.update_relation(rel!("Alice", "Fred", 123));
+                assert_eq!(relations.is_correct(), false);
+                relations.update_relation(rel!("Bob", "Fred", 123));
+                assert_eq!(relations.is_correct(), false);
+                relations.update_relation(rel!("Fred", "Alice", -333));
+                assert_eq!(relations.is_correct(), false);
+                relations.update_relation(rel!("Fred", "Bob", -333));
+                assert_eq!(relations.is_correct(), true);
+            }
+        }
 
         mod update_relation {
             use super::*;
