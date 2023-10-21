@@ -1,11 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
-use itertools::Itertools;
-
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::From, derive_more::Deref,
 )]
-pub struct Happiness(i32);
+pub struct Happiness(pub i32);
 
 #[derive(Debug)]
 pub struct Relation<T> {
@@ -16,6 +14,14 @@ pub struct Relation<T> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Idx(usize);
+
+#[derive(Debug, thiserror::Error)]
+pub enum CalculateHappinessError {
+    #[error("relation map is incorrect")]
+    RelationMapIncorrect,
+    #[error("table has unknown participant")]
+    TableHasUnknonParticipant,
+}
 
 #[derive(Debug)]
 pub struct RelationMap {
@@ -53,9 +59,9 @@ impl RelationMap {
         (from, to)
     }
 
-    pub fn calculate_happiness(&self, table: &[Idx]) -> Option<Happiness> {
+    pub fn calculate_happiness(&self, table: &[Idx]) -> Result<Happiness, CalculateHappinessError> {
         if !self.is_correct() {
-            return None;
+            return Err(CalculateHappinessError::RelationMapIncorrect);
         }
 
         let has_unknown_participant = HashSet::<&Idx>::from_iter(table.iter())
@@ -63,15 +69,14 @@ impl RelationMap {
             .count()
             != 0;
         if has_unknown_participant {
-            return None;
+            return Err(CalculateHappinessError::TableHasUnknonParticipant);
         }
 
         match table.len() {
-            0 | 1 => Some(0.into()),
-            2 => Some(
-                (*self.relations[&table[0]][&table[1]] + *self.relations[&table[1]][&table[0]])
-                    .into(),
-            ),
+            0 | 1 => Ok(0.into()),
+            2 => Ok((*self.relations[&table[0]][&table[1]]
+                + *self.relations[&table[1]][&table[0]])
+                .into()),
             len @ _ => {
                 let mut happiness = 0;
                 for i in 0..len {
@@ -86,7 +91,7 @@ impl RelationMap {
                     happiness +=
                         *self.relations[&subject][&left] + *self.relations[&subject][&right];
                 }
-                Some(happiness.into())
+                Ok(happiness.into())
             }
         }
     }
@@ -104,7 +109,6 @@ impl RelationMap {
                     HashSet::<&Idx>::from_iter(self.relations.keys()),
                     HashSet::<&Idx>::from_iter(self.participants.values()),
                 );
-                println!("{:?} {:?}", r, p);
                 if p.difference(&r).count() != 0 {
                     return false;
                 }
@@ -137,6 +141,7 @@ impl RelationMap {
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! rel {
     ($from:expr, $to:expr, $happiness:expr) => {
         Relation {
@@ -148,6 +153,7 @@ macro_rules! rel {
 }
 
 pub mod relation_map {
+    #[allow(unused_imports)]
     use super::*;
 
     #[cfg(test)]
@@ -160,13 +166,16 @@ pub mod relation_map {
             #[test]
             fn unknown_participants() {
                 let relation_map = RelationMap::new();
-                assert_eq!(relation_map.calculate_happiness(&[Idx(0)]), None);
+                assert!(matches!(
+                    relation_map.calculate_happiness(&[Idx(0)]),
+                    Err(CalculateHappinessError::TableHasUnknonParticipant)
+                ));
             }
 
             #[test]
             fn zero_participants() {
                 let relation_map = RelationMap::new();
-                assert_eq!(relation_map.calculate_happiness(&[]), Some(0.into()));
+                assert_eq!(relation_map.calculate_happiness(&[]).unwrap(), 0.into());
             }
 
             #[test]
@@ -175,15 +184,17 @@ pub mod relation_map {
                 relation_map.update_relation(rel!("Alice", "Bob", 54));
                 let (bob, alice) = relation_map.update_relation(rel!("Bob", "Alice", -33));
                 assert_eq!(
-                    relation_map.calculate_happiness(&[alice, bob]),
-                    Some(21.into())
+                    *relation_map.calculate_happiness(&[alice, bob]).unwrap(),
+                    21
                 );
-                assert_eq!(relation_map.calculate_happiness(&[alice]), Some(0.into()));
-                assert_eq!(relation_map.calculate_happiness(&[bob]), Some(0.into()));
-                assert_eq!(
-                    relation_map.calculate_happiness(&[alice, bob, Idx(333)]),
-                    None
-                );
+                assert_eq!(*relation_map.calculate_happiness(&[alice]).unwrap(), 0);
+                assert_eq!(*relation_map.calculate_happiness(&[bob]).unwrap(), 0);
+
+                assert!(relation_map
+                    .calculate_happiness(&[alice, bob, Idx(333)])
+                    .is_err_and(|e| {
+                        matches!(e, CalculateHappinessError::TableHasUnknonParticipant)
+                    }));
             }
 
             #[test]
@@ -195,15 +206,18 @@ pub mod relation_map {
                 relation_map.update_relation(rel!("Bob", "Fred", 532));
                 relation_map.update_relation(rel!("Fred", "Alice", -333));
                 let (fred, _) = relation_map.update_relation(rel!("Fred", "Bob", -222));
-                assert_eq!(relation_map.calculate_happiness(&[alice]), Some(0.into()));
-                assert_eq!(relation_map.calculate_happiness(&[bob]), Some(0.into()));
+                assert_eq!(*relation_map.calculate_happiness(&[alice]).unwrap(), 0);
+                assert_eq!(*relation_map.calculate_happiness(&[bob]).unwrap(), 0);
+                assert!(relation_map
+                    .calculate_happiness(&[alice, bob, Idx(333)])
+                    .is_err_and(|e| {
+                        matches!(e, CalculateHappinessError::TableHasUnknonParticipant)
+                    }));
                 assert_eq!(
-                    relation_map.calculate_happiness(&[alice, bob, Idx(333)]),
-                    None
-                );
-                assert_eq!(
-                    relation_map.calculate_happiness(&[alice, bob, fred]),
-                    Some(121.into())
+                    *relation_map
+                        .calculate_happiness(&[alice, bob, fred])
+                        .unwrap(),
+                    121
                 );
             }
 
@@ -234,7 +248,7 @@ pub mod relation_map {
                     relation_map.participants["David"],
                 ];
 
-                assert_eq!(relation_map.calculate_happiness(table), Some(330.into()));
+                assert_eq!(*relation_map.calculate_happiness(table).unwrap(), 330);
             }
         }
 
