@@ -6,13 +6,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let json: serde_json::Value = serde_json::from_reader(file)?;
 
-    let part1_res = summarize::count(&json)?;
+    let part1_res = summarize::sum(&json)?;
     println!("Part 1: {}", part1_res);
 
-    let should_count = |v: &serde_json::Value| {
-        let mut should_skip = false;
+    let is_not_red_obj = |v: &serde_json::Value| {
+        let mut is_red_obj = false;
         if let serde_json::Value::Object(o) = v {
-            should_skip = o.values().any(|v| {
+            is_red_obj = o.values().any(|v| {
                 if let serde_json::Value::String(s) = v {
                     s == "red"
                 } else {
@@ -20,10 +20,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             });
         }
-        !should_skip
+        !is_red_obj
     };
 
-    let part2_res = summarize::count_if(&json, should_count)?;
+    let part2_res = summarize::sum_if(&json, is_not_red_obj)?;
     println!("Part 2: {}", part2_res);
 
     Ok(())
