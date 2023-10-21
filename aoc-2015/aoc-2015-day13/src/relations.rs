@@ -66,6 +66,16 @@ impl Relations {
     }
 }
 
+macro_rules! rel {
+    ($from:expr, $to:expr, $happiness:expr) => {
+        Relation {
+            from: $from,
+            to: $to,
+            happiness: Happiness($happiness),
+        }
+    };
+}
+
 pub mod relations {
     use super::*;
 
@@ -80,21 +90,15 @@ pub mod relations {
             fn correctly_updates_relation() {
                 let mut relations = Relations::new();
 
-                let (from, to) = relations.update_relation(Relation {
-                    from: "Alice",
-                    to: "Bob",
-                    happiness: Happiness(54),
-                });
+                let (from, to) = relations.update_relation(rel!("Alice", "Bob", 54));
+                assert_ne!(from, to);
                 assert_eq!(relations.participants["Alice"], from);
                 assert_eq!(relations.participants["Bob"], to);
                 assert_eq!(*relations.relations[&to][&from], 54);
                 assert_eq!(relations.relations.contains_key(&from), false);
 
-                let (from, to) = relations.update_relation(Relation {
-                    from: "Alice",
-                    to: "Bob",
-                    happiness: Happiness(-33),
-                });
+                let (from, to) = relations.update_relation(rel!("Bob", "Alice", -33));
+                assert_ne!(from, to);
                 assert_eq!(*relations.relations[&to][&from], -33);
             }
         }
