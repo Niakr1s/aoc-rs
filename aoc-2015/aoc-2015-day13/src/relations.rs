@@ -18,15 +18,15 @@ pub struct Relation<T> {
 pub struct Idx(usize);
 
 #[derive(Debug)]
-pub struct Relations {
+pub struct RelationMap {
     next_idx: Idx,
     participants: HashMap<String, Idx>,
     relations: HashMap<Idx, HashMap<Idx, Happiness>>,
 }
 
-impl Relations {
+impl RelationMap {
     pub fn new() -> Self {
-        Relations {
+        RelationMap {
             next_idx: Idx(0),
             participants: HashMap::new(),
             relations: HashMap::new(),
@@ -143,7 +143,7 @@ macro_rules! rel {
     };
 }
 
-pub mod relations {
+pub mod relation_map {
     use super::*;
 
     #[cfg(test)]
@@ -155,44 +155,50 @@ pub mod relations {
 
             #[test]
             fn unknown_participants() {
-                let relations = Relations::new();
-                assert_eq!(relations.calculate_happiness(&[Idx(0)]), None);
+                let relation_map = RelationMap::new();
+                assert_eq!(relation_map.calculate_happiness(&[Idx(0)]), None);
             }
 
             #[test]
             fn zero_participants() {
-                let relations = Relations::new();
-                assert_eq!(relations.calculate_happiness(&[]), Some(0.into()));
+                let relation_map = RelationMap::new();
+                assert_eq!(relation_map.calculate_happiness(&[]), Some(0.into()));
             }
 
             #[test]
             fn two_participants() {
-                let mut relations = Relations::new();
-                relations.update_relation(rel!("Alice", "Bob", 54));
-                let (bob, alice) = relations.update_relation(rel!("Bob", "Alice", -33));
+                let mut relation_map = RelationMap::new();
+                relation_map.update_relation(rel!("Alice", "Bob", 54));
+                let (bob, alice) = relation_map.update_relation(rel!("Bob", "Alice", -33));
                 assert_eq!(
-                    relations.calculate_happiness(&[alice, bob]),
+                    relation_map.calculate_happiness(&[alice, bob]),
                     Some(21.into())
                 );
-                assert_eq!(relations.calculate_happiness(&[alice]), Some(0.into()));
-                assert_eq!(relations.calculate_happiness(&[bob]), Some(0.into()));
-                assert_eq!(relations.calculate_happiness(&[alice, bob, Idx(333)]), None);
+                assert_eq!(relation_map.calculate_happiness(&[alice]), Some(0.into()));
+                assert_eq!(relation_map.calculate_happiness(&[bob]), Some(0.into()));
+                assert_eq!(
+                    relation_map.calculate_happiness(&[alice, bob, Idx(333)]),
+                    None
+                );
             }
 
             #[test]
             fn three_participants() {
-                let mut relations = Relations::new();
-                let (alice, bob) = relations.update_relation(rel!("Alice", "Bob", 54));
-                relations.update_relation(rel!("Bob", "Alice", -33));
-                relations.update_relation(rel!("Alice", "Fred", 123));
-                relations.update_relation(rel!("Bob", "Fred", 532));
-                relations.update_relation(rel!("Fred", "Alice", -333));
-                let (fred, _) = relations.update_relation(rel!("Fred", "Bob", -222));
-                assert_eq!(relations.calculate_happiness(&[alice]), Some(0.into()));
-                assert_eq!(relations.calculate_happiness(&[bob]), Some(0.into()));
-                assert_eq!(relations.calculate_happiness(&[alice, bob, Idx(333)]), None);
+                let mut relation_map = RelationMap::new();
+                let (alice, bob) = relation_map.update_relation(rel!("Alice", "Bob", 54));
+                relation_map.update_relation(rel!("Bob", "Alice", -33));
+                relation_map.update_relation(rel!("Alice", "Fred", 123));
+                relation_map.update_relation(rel!("Bob", "Fred", 532));
+                relation_map.update_relation(rel!("Fred", "Alice", -333));
+                let (fred, _) = relation_map.update_relation(rel!("Fred", "Bob", -222));
+                assert_eq!(relation_map.calculate_happiness(&[alice]), Some(0.into()));
+                assert_eq!(relation_map.calculate_happiness(&[bob]), Some(0.into()));
                 assert_eq!(
-                    relations.calculate_happiness(&[alice, bob, fred]),
+                    relation_map.calculate_happiness(&[alice, bob, Idx(333)]),
+                    None
+                );
+                assert_eq!(
+                    relation_map.calculate_happiness(&[alice, bob, fred]),
                     Some(121.into())
                 );
             }
@@ -212,19 +218,19 @@ pub mod relations {
                 David would lose 7 happiness units by sitting next to Bob.
                 David would gain 41 happiness units by sitting next to Carol."#;
 
-                let mut relations = Relations::new();
+                let mut relation_map = RelationMap::new();
                 for line in PARTICIPANTS.lines() {
-                    relations.update_relation(Relation::from_adventofcode_line(line).unwrap());
+                    relation_map.update_relation(Relation::from_adventofcode_line(line).unwrap());
                 }
 
                 let table = &[
-                    relations.participants["Alice"],
-                    relations.participants["Bob"],
-                    relations.participants["Carol"],
-                    relations.participants["David"],
+                    relation_map.participants["Alice"],
+                    relation_map.participants["Bob"],
+                    relation_map.participants["Carol"],
+                    relation_map.participants["David"],
                 ];
 
-                assert_eq!(relations.calculate_happiness(table), Some(330.into()));
+                assert_eq!(relation_map.calculate_happiness(table), Some(330.into()));
             }
         }
 
@@ -233,43 +239,43 @@ pub mod relations {
 
             #[test]
             fn zero_participants() {
-                let relations = Relations::new();
-                assert_eq!(relations.is_correct(), true);
+                let relation_map = RelationMap::new();
+                assert_eq!(relation_map.is_correct(), true);
             }
 
             #[test]
             fn one_participant() {
                 // It's contrived example with accessing to private members, but let it be.
-                let mut relations = Relations::new();
-                relations.participants.insert("Bob".to_owned(), Idx(0));
-                relations.next_idx = Idx(1);
-                assert_eq!(relations.is_correct(), false);
+                let mut relation_map = RelationMap::new();
+                relation_map.participants.insert("Bob".to_owned(), Idx(0));
+                relation_map.next_idx = Idx(1);
+                assert_eq!(relation_map.is_correct(), false);
             }
 
             #[test]
             fn two_participants() {
-                let mut relations = Relations::new();
-                relations.update_relation(rel!("Alice", "Bob", 54));
-                assert_eq!(relations.is_correct(), false);
-                relations.update_relation(rel!("Bob", "Alice", -33));
-                assert_eq!(relations.is_correct(), true);
+                let mut relation_map = RelationMap::new();
+                relation_map.update_relation(rel!("Alice", "Bob", 54));
+                assert_eq!(relation_map.is_correct(), false);
+                relation_map.update_relation(rel!("Bob", "Alice", -33));
+                assert_eq!(relation_map.is_correct(), true);
             }
 
             #[test]
             fn three_participants() {
-                let mut relations = Relations::new();
-                relations.update_relation(rel!("Alice", "Bob", 54));
-                assert_eq!(relations.is_correct(), false);
-                relations.update_relation(rel!("Bob", "Alice", -33));
-                assert_eq!(relations.is_correct(), true);
-                relations.update_relation(rel!("Alice", "Fred", 123));
-                assert_eq!(relations.is_correct(), false);
-                relations.update_relation(rel!("Bob", "Fred", 123));
-                assert_eq!(relations.is_correct(), false);
-                relations.update_relation(rel!("Fred", "Alice", -333));
-                assert_eq!(relations.is_correct(), false);
-                relations.update_relation(rel!("Fred", "Bob", -333));
-                assert_eq!(relations.is_correct(), true);
+                let mut relation_map = RelationMap::new();
+                relation_map.update_relation(rel!("Alice", "Bob", 54));
+                assert_eq!(relation_map.is_correct(), false);
+                relation_map.update_relation(rel!("Bob", "Alice", -33));
+                assert_eq!(relation_map.is_correct(), true);
+                relation_map.update_relation(rel!("Alice", "Fred", 123));
+                assert_eq!(relation_map.is_correct(), false);
+                relation_map.update_relation(rel!("Bob", "Fred", 123));
+                assert_eq!(relation_map.is_correct(), false);
+                relation_map.update_relation(rel!("Fred", "Alice", -333));
+                assert_eq!(relation_map.is_correct(), false);
+                relation_map.update_relation(rel!("Fred", "Bob", -333));
+                assert_eq!(relation_map.is_correct(), true);
             }
         }
 
@@ -278,18 +284,18 @@ pub mod relations {
 
             #[test]
             fn correctly_updates_relation() {
-                let mut relations = Relations::new();
+                let mut relation_map = RelationMap::new();
 
-                let (from, to) = relations.update_relation(rel!("Alice", "Bob", 54));
+                let (from, to) = relation_map.update_relation(rel!("Alice", "Bob", 54));
                 assert_ne!(from, to);
-                assert_eq!(relations.participants["Alice"], from);
-                assert_eq!(relations.participants["Bob"], to);
-                assert_eq!(*relations.relations[&to][&from], 54);
-                assert_eq!(relations.relations.contains_key(&from), false);
+                assert_eq!(relation_map.participants["Alice"], from);
+                assert_eq!(relation_map.participants["Bob"], to);
+                assert_eq!(*relation_map.relations[&to][&from], 54);
+                assert_eq!(relation_map.relations.contains_key(&from), false);
 
-                let (from, to) = relations.update_relation(rel!("Bob", "Alice", -33));
+                let (from, to) = relation_map.update_relation(rel!("Bob", "Alice", -33));
                 assert_ne!(from, to);
-                assert_eq!(*relations.relations[&to][&from], -33);
+                assert_eq!(*relation_map.relations[&to][&from], -33);
             }
         }
     }
