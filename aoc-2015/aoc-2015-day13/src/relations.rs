@@ -131,6 +131,10 @@ impl RelationMap {
     fn incr_next_idx(&mut self) {
         self.next_idx = Idx(self.next_idx.0 + 1);
     }
+
+    pub fn participants(&self) -> &HashMap<String, Idx> {
+        &self.participants
+    }
 }
 
 macro_rules! rel {
