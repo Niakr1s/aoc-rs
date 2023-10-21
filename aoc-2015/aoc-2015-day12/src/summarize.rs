@@ -2,6 +2,9 @@ pub fn count(v: &serde_json::Value) -> Result<i64, JsonSummarizeError> {
     count_if(v, &mut |_| true)
 }
 
+// Take attention to parameter p. It takes &mut.
+// It's same as if we passed &mut to a struct for example.
+// It allows us to reborrow it in other functions.
 pub fn count_if<F>(v: &serde_json::Value, p: &mut F) -> Result<i64, JsonSummarizeError>
 where
     F: FnMut(&serde_json::Value) -> bool,
@@ -27,6 +30,7 @@ fn count_values<'a, F>(
 where
     F: FnMut(&serde_json::Value) -> bool,
 {
+    // Need to collect, because we can't call p in a chain.
     let ret = values.filter(|&v| p(v)).collect::<Vec<_>>();
     let ret = ret
         .into_iter()
