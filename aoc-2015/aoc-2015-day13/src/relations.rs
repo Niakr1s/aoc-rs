@@ -53,6 +53,44 @@ impl Relations {
         (from, to)
     }
 
+    pub fn calculate_happiness(&self, table: &[Idx]) -> Option<Happiness> {
+        if !self.is_correct() {
+            return None;
+        }
+
+        let has_unknown_participant = HashSet::<&Idx>::from_iter(table.iter())
+            .difference(&HashSet::<&Idx>::from_iter(self.participants.values()))
+            .count()
+            != 0;
+        if has_unknown_participant {
+            return None;
+        }
+
+        match table.len() {
+            0 | 1 => Some(0.into()),
+            2 => Some(
+                (*self.relations[&table[0]][&table[1]] + *self.relations[&table[1]][&table[0]])
+                    .into(),
+            ),
+            len @ _ => {
+                let mut happiness = 0;
+                for i in 0..len {
+                    let subject = table[i];
+                    let (left, right) = if i == 0 {
+                        (table[len - 1], table[i + 1])
+                    } else if i == len - 1 {
+                        (table[i - 1], table[0])
+                    } else {
+                        (table[i - 1], table[i + 1])
+                    };
+                    happiness +=
+                        *self.relations[&subject][&left] + *self.relations[&subject][&right];
+                }
+                Some(happiness.into())
+            }
+        }
+    }
+
     /// Each of n participants should have n-1 relations to others.
     /// Zero participants also correct.
     /// One participant should be incorrect, because we always add relation of
@@ -111,6 +149,84 @@ pub mod relations {
     #[cfg(test)]
     mod tests {
         use super::*;
+
+        mod calculate_happiness {
+            use super::*;
+
+            #[test]
+            fn unknown_participants() {
+                let relations = Relations::new();
+                assert_eq!(relations.calculate_happiness(&[Idx(0)]), None);
+            }
+
+            #[test]
+            fn zero_participants() {
+                let relations = Relations::new();
+                assert_eq!(relations.calculate_happiness(&[]), Some(0.into()));
+            }
+
+            #[test]
+            fn two_participants() {
+                let mut relations = Relations::new();
+                relations.update_relation(rel!("Alice", "Bob", 54));
+                let (bob, alice) = relations.update_relation(rel!("Bob", "Alice", -33));
+                assert_eq!(
+                    relations.calculate_happiness(&[alice, bob]),
+                    Some(21.into())
+                );
+                assert_eq!(relations.calculate_happiness(&[alice]), Some(0.into()));
+                assert_eq!(relations.calculate_happiness(&[bob]), Some(0.into()));
+                assert_eq!(relations.calculate_happiness(&[alice, bob, Idx(333)]), None);
+            }
+
+            #[test]
+            fn three_participants() {
+                let mut relations = Relations::new();
+                let (alice, bob) = relations.update_relation(rel!("Alice", "Bob", 54));
+                relations.update_relation(rel!("Bob", "Alice", -33));
+                relations.update_relation(rel!("Alice", "Fred", 123));
+                relations.update_relation(rel!("Bob", "Fred", 532));
+                relations.update_relation(rel!("Fred", "Alice", -333));
+                let (fred, _) = relations.update_relation(rel!("Fred", "Bob", -222));
+                assert_eq!(relations.calculate_happiness(&[alice]), Some(0.into()));
+                assert_eq!(relations.calculate_happiness(&[bob]), Some(0.into()));
+                assert_eq!(relations.calculate_happiness(&[alice, bob, Idx(333)]), None);
+                assert_eq!(
+                    relations.calculate_happiness(&[alice, bob, fred]),
+                    Some(121.into())
+                );
+            }
+
+            #[test]
+            fn many_participants() {
+                const PARTICIPANTS: &'static str = r#"Alice would gain 54 happiness units by sitting next to Bob.
+                Alice would lose 79 happiness units by sitting next to Carol.
+                Alice would lose 2 happiness units by sitting next to David.
+                Bob would gain 83 happiness units by sitting next to Alice.
+                Bob would lose 7 happiness units by sitting next to Carol.
+                Bob would lose 63 happiness units by sitting next to David.
+                Carol would lose 62 happiness units by sitting next to Alice.
+                Carol would gain 60 happiness units by sitting next to Bob.
+                Carol would gain 55 happiness units by sitting next to David.
+                David would gain 46 happiness units by sitting next to Alice.
+                David would lose 7 happiness units by sitting next to Bob.
+                David would gain 41 happiness units by sitting next to Carol."#;
+
+                let mut relations = Relations::new();
+                for line in PARTICIPANTS.lines() {
+                    relations.update_relation(Relation::from_adventofcode_line(line).unwrap());
+                }
+
+                let table = &[
+                    relations.participants["Alice"],
+                    relations.participants["Bob"],
+                    relations.participants["Carol"],
+                    relations.participants["David"],
+                ];
+
+                assert_eq!(relations.calculate_happiness(table), Some(330.into()));
+            }
+        }
 
         mod is_correct {
             use super::*;
