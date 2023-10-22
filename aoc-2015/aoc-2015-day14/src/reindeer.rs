@@ -43,6 +43,32 @@ impl Reindeer {
     }
 }
 
+#[cfg(test)]
+/// Create 3 reindeers: Comet, Dancer, Vixen
+pub fn mock_reindeers() -> Vec<Reindeer> {
+    vec![
+        Reindeer {
+            name: "Comet".to_owned(),
+            speed: 14,
+            fly_time: 10,
+            rest_time: 127,
+        },
+        Reindeer {
+            name: "Dancer".to_owned(),
+            speed: 16,
+            fly_time: 11,
+            rest_time: 162,
+        },
+        Reindeer {
+            name: "Vixen".to_owned(),
+            speed: 8,
+            fly_time: 3,
+            rest_time: 53,
+        },
+    ]
+}
+
+#[cfg(test)]
 mod tests {
     #[allow(unused_imports)]
     use super::*;

@@ -1,3 +1,6 @@
+pub mod judge;
+
+use self::judge::Judge;
 use crate::reindeer::Reindeer;
 
 pub trait Race {
@@ -58,6 +61,49 @@ impl<'a> Race for NormalRace<'a> {
 
     fn scores(&self) -> Vec<u32> {
         self.distances.to_vec()
+    }
+}
+
+pub struct RaceWithJudge<'a, J> {
+    race: NormalRace<'a>,
+    scores: Vec<u32>,
+    judge: J,
+}
+
+impl<'a, J> RaceWithJudge<'a, J>
+where
+    J: Judge + Clone,
+{
+    pub fn new(race: NormalRace<'a>, judge: J) -> RaceWithJudge<'a, J> {
+        let len = race.reindeers.len();
+        RaceWithJudge {
+            race,
+            judge,
+            scores: vec![0; len],
+        }
+    }
+}
+
+impl<'a, J> Race for RaceWithJudge<'a, J>
+where
+    J: Judge + Clone,
+{
+    fn after(mut self, secs: u32) -> Self {
+        for _ in 0..secs {
+            self.race.after_one_sec();
+            let scores_diffs = self.judge.calculate_scores(&self.race);
+            self.scores = self
+                .scores
+                .iter()
+                .zip(scores_diffs)
+                .map(|(&s, d)| s + d)
+                .collect();
+        }
+        self
+    }
+
+    fn scores(&self) -> Vec<u32> {
+        self.scores.clone()
     }
 }
 
