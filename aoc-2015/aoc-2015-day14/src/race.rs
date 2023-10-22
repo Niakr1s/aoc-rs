@@ -1,7 +1,12 @@
 use crate::reindeer::Reindeer;
 
+pub trait Race {
+    fn after(self, secs: u32) -> Self;
+    fn scores(&self) -> Vec<u32>;
+}
+
 #[derive(Debug, Clone)]
-pub struct Race<'a> {
+pub struct NormalRace<'a> {
     elapsed: u32,
     reindeers: Vec<&'a Reindeer>,
     states: Vec<ReindeerState>,
@@ -13,19 +18,14 @@ pub struct Score<'a> {
     pub score: u32,
 }
 
-impl<'a> Race<'a> {
-    pub fn new(reindeers: &'a [Reindeer]) -> Race<'a> {
-        Race {
+impl<'a> NormalRace<'a> {
+    pub fn new(reindeers: &'a [Reindeer]) -> NormalRace<'a> {
+        NormalRace {
             elapsed: 0,
             reindeers: reindeers.iter().collect(),
             states: vec![ReindeerState::Flying(0); reindeers.len()],
             distances: vec![0; reindeers.len()],
         }
-    }
-
-    pub fn after(mut self, secs: u32) -> Race<'a> {
-        (0..secs).for_each(|_| self.after_one_sec());
-        self
     }
 
     fn after_one_sec(&mut self) {
@@ -52,6 +52,17 @@ impl<'a> Race<'a> {
 
     pub fn distances(&self) -> &[u32] {
         self.distances.as_ref()
+    }
+}
+
+impl<'a> Race for NormalRace<'a> {
+    fn after(mut self, secs: u32) -> Self {
+        (0..secs).for_each(|_| self.after_one_sec());
+        self
+    }
+
+    fn scores(&self) -> Vec<u32> {
+        self.distances.to_vec()
     }
 }
 
@@ -116,7 +127,7 @@ mod tests {
                 rest_time: 127,
             };
             let binding = [reindeer];
-            let race = Race::new(&binding);
+            let race = NormalRace::new(&binding);
             assert_eq!(race.clone().after(1).distances[0], 14);
             assert_eq!(race.clone().after(10).distances[0], 140);
             assert_eq!(race.clone().after(11).distances[0], 140);
@@ -135,7 +146,7 @@ mod tests {
                 rest_time: 162,
             };
             let binding = [reindeer];
-            let race = Race::new(&binding);
+            let race = NormalRace::new(&binding);
             assert_eq!(race.clone().after(1).distances[0], 16);
             assert_eq!(race.clone().after(10).distances[0], 160);
             assert_eq!(race.clone().after(11).distances[0], 176);

@@ -1,6 +1,9 @@
 use std::io::BufRead;
 
-use aoc_2015_day14::{race::Race, reindeer::Reindeer};
+use aoc_2015_day14::{
+    race::{NormalRace, Race},
+    reindeer::Reindeer,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filepath = helpers::get_filepath_from_args();
@@ -10,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .lines()
         .flat_map(|line| line.map(|line| Reindeer::from_aoc_line(&line)))
         .collect::<Result<Vec<_>, _>>()?;
-    let race = Race::new(&reindeers);
+    let race = NormalRace::new(&reindeers);
     let race = race.after(2503);
     let (winner, distance) = race
         .distances()
