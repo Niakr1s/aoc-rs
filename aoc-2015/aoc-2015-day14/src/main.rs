@@ -1,7 +1,7 @@
 use std::io::BufRead;
 
 use aoc_2015_day14::{
-    race::{NormalRace, Race},
+    race::{judge::LeadingReindeerJudge, JudgedRace, NormalRace, Race},
     reindeer::Reindeer,
 };
 
@@ -13,18 +13,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .lines()
         .flat_map(|line| line.map(|line| Reindeer::from_aoc_line(&line)))
         .collect::<Result<Vec<_>, _>>()?;
-    let race = NormalRace::new(&reindeers);
+
+    let normal_race = NormalRace::new(&reindeers);
+    println!("Part1:");
+    run(normal_race)?;
+
+    let judged_race = JudgedRace::new(&reindeers, LeadingReindeerJudge);
+    println!("Part2:");
+    run(judged_race)?;
+
+    Ok(())
+}
+
+fn run(race: impl Race) -> Result<(), Box<dyn std::error::Error>> {
     let race = race.after(2503);
-    let (winner, distance) = race
-        .distances()
-        .iter()
+    let (winner, score) = race
+        .scores()
+        .into_iter()
         .enumerate()
-        .max_by_key(|(_, &d)| d)
+        .max_by_key(|(_, d)| *d)
         .ok_or("No winner")?;
     println!(
-        "Part1: the winner is {} with a distance of {}",
-        reindeers[winner].name, distance
+        "The winner is {} with a score of {}",
+        race.reindeers()[winner].name,
+        score
     );
-
     Ok(())
 }
