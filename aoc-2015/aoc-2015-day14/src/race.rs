@@ -6,6 +6,8 @@ use crate::reindeer::Reindeer;
 pub trait Race: Clone {
     fn after(self, secs: u32) -> Self;
     fn scores(&self) -> Vec<u32>;
+    fn reindeers(&self) -> &[&Reindeer];
+    fn distances(&self) -> &[u32];
 }
 
 #[derive(Debug, Clone)]
@@ -51,6 +53,10 @@ impl<'a> NormalRace<'a> {
     pub fn distances(&self) -> &[u32] {
         self.distances.as_ref()
     }
+
+    pub fn reindeers(&self) -> &[&Reindeer] {
+        self.reindeers.as_ref()
+    }
 }
 
 impl<'a> Race for NormalRace<'a> {
@@ -61,6 +67,14 @@ impl<'a> Race for NormalRace<'a> {
 
     fn scores(&self) -> Vec<u32> {
         self.distances.to_vec()
+    }
+
+    fn reindeers(&self) -> &[&Reindeer] {
+        self.reindeers.as_ref()
+    }
+
+    fn distances(&self) -> &[u32] {
+        self.distances.as_ref()
     }
 }
 
@@ -106,6 +120,14 @@ where
 
     fn scores(&self) -> Vec<u32> {
         self.scores.clone()
+    }
+
+    fn reindeers(&self) -> &[&Reindeer] {
+        self.race.reindeers()
+    }
+
+    fn distances(&self) -> &[u32] {
+        self.race.distances()
     }
 }
 
