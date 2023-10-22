@@ -65,19 +65,19 @@ impl<'a> Race for NormalRace<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct RaceWithJudge<'a, J> {
+pub struct JudgedRace<'a, J> {
     race: NormalRace<'a>,
     scores: Vec<u32>,
     judge: J,
 }
 
-impl<'a, J> RaceWithJudge<'a, J>
+impl<'a, J> JudgedRace<'a, J>
 where
     J: Judge + Clone,
 {
-    pub fn new(race: NormalRace<'a>, judge: J) -> RaceWithJudge<'a, J> {
+    pub fn new(race: NormalRace<'a>, judge: J) -> JudgedRace<'a, J> {
         let len = race.reindeers.len();
-        RaceWithJudge {
+        JudgedRace {
             race,
             judge,
             scores: vec![0; len],
@@ -85,7 +85,7 @@ where
     }
 }
 
-impl<'a, J> Race for RaceWithJudge<'a, J>
+impl<'a, J> Race for JudgedRace<'a, J>
 where
     J: Judge + Clone,
 {
@@ -135,7 +135,7 @@ impl ReindeerState {
 mod tests {
     use super::*;
 
-    mod race_with_judge {
+    mod judged_race {
         use crate::{race::judge::LeadingReindeerJudge, reindeer::comet_dancer_vixen};
 
         use super::*;
@@ -154,7 +154,7 @@ mod tests {
         fn judge_works() {
             let reindeers = comet_dancer_vixen();
             let normal_race = NormalRace::new(&reindeers[0..2]);
-            let judged_race = RaceWithJudge::new(normal_race, LeadingReindeerJudge);
+            let judged_race = JudgedRace::new(normal_race, LeadingReindeerJudge);
 
             assert_eq!(judged_race.clone().after(1).scores(), vec![0, 1]);
             assert_eq!(judged_race.clone().after(140).scores(), vec![1, 139]);
