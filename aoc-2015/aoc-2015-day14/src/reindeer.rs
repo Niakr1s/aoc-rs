@@ -45,7 +45,7 @@ impl Reindeer {
 
 #[cfg(test)]
 /// Create 3 reindeers: Comet, Dancer, Vixen
-pub fn mock_reindeers() -> Vec<Reindeer> {
+pub fn comet_dancer_vixen() -> Vec<Reindeer> {
     vec![
         Reindeer {
             name: "Comet".to_owned(),

@@ -4,6 +4,7 @@ pub trait Judge {
     fn calculate_scores(&self, race: &NormalRace) -> Vec<u32>;
 }
 
+#[derive(Debug, Clone)]
 pub struct LeadingReindeerJudge;
 
 impl Judge for LeadingReindeerJudge {
@@ -31,7 +32,7 @@ mod tests {
 
         #[cfg(test)]
         mod calculate_scores {
-            use crate::reindeer::mock_reindeers;
+            use crate::reindeer::comet_dancer_vixen;
 
             use super::*;
 
@@ -47,7 +48,7 @@ mod tests {
 
             #[test]
             fn one_leader() {
-                let reindeers = mock_reindeers();
+                let reindeers = comet_dancer_vixen();
                 let mut race = NormalRace::new(&reindeers);
                 race.distances = vec![1, 5, 3];
 
@@ -58,7 +59,7 @@ mod tests {
 
             #[test]
             fn several_leaders() {
-                let reindeers = mock_reindeers();
+                let reindeers = comet_dancer_vixen();
                 let mut race = NormalRace::new(&reindeers);
                 race.distances = vec![3, 1, 3];
 
