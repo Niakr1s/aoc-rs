@@ -44,7 +44,13 @@ impl Reindeer {
 }
 
 #[cfg(test)]
-/// Create 3 reindeers: Comet, Dancer, Vixen
+/// Create 3 reindeers: Comet, Dancer, Vixen:
+///
+/// Comet can fly 14 km/s for 10 seconds, but then must rest for 127 seconds.
+///
+/// Dancer can fly 16 km/s for 11 seconds, but then must rest for 162 seconds.
+///
+/// Vixen can fly 8 km/s for 3 seconds, but then must rest for 53 seconds.
 pub fn comet_dancer_vixen() -> Vec<Reindeer> {
     vec![
         Reindeer {
@@ -84,11 +90,13 @@ mod tests {
             #[test]
             fn valid_line() {
                 let line = "Vixen can fly 8 km/s for 3 seconds, but then must rest for 53 seconds.";
-                let reindeer = Reindeer::from_aoc_line(line).unwrap();
-                assert_eq!(reindeer.name, "Vixen");
-                assert_eq!(reindeer.speed, 8);
-                assert_eq!(reindeer.fly_time, 3);
-                assert_eq!(reindeer.rest_time, 53);
+                let parsed = Reindeer::from_aoc_line(line).unwrap();
+                let reindeers = comet_dancer_vixen();
+                let wanted = &reindeers[2];
+                assert_eq!(parsed.name, wanted.name);
+                assert_eq!(parsed.speed, wanted.speed);
+                assert_eq!(parsed.fly_time, wanted.fly_time);
+                assert_eq!(parsed.rest_time, wanted.rest_time);
             }
         }
     }

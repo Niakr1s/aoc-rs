@@ -166,16 +166,10 @@ mod tests {
         use super::*;
 
         mod get_distance_after {
+            use crate::reindeer::comet_dancer_vixen;
+
             use super::*;
 
-            // For example, suppose you have the following Reindeer:
-            //
-            // Comet can fly 14 km/s for 10 seconds, but then must rest for 127
-            // seconds.
-            //
-            // Dancer can fly 16 km/s for 11 seconds, but then must
-            // rest for 162 seconds.
-            //
             // After one second, Comet has gone 14 km, while Dancer has gone 16
             // km. After ten seconds, Comet has gone 140 km, while Dancer has
             // gone 160 km. On the eleventh second, Comet begins resting
@@ -192,14 +186,8 @@ mod tests {
 
             #[test]
             fn comet() {
-                let reindeer = Reindeer {
-                    name: "Comet".to_owned(),
-                    speed: 14,
-                    fly_time: 10,
-                    rest_time: 127,
-                };
-                let binding = [reindeer];
-                let race = NormalRace::new(&binding);
+                let reindeers = comet_dancer_vixen();
+                let race = NormalRace::new(&reindeers);
                 assert_eq!(race.clone().after(1).distances[0], 14);
                 assert_eq!(race.clone().after(10).distances[0], 140);
                 assert_eq!(race.clone().after(11).distances[0], 140);
@@ -211,21 +199,15 @@ mod tests {
 
             #[test]
             fn dancer() {
-                let reindeer = Reindeer {
-                    name: "Dancer".to_owned(),
-                    speed: 16,
-                    fly_time: 11,
-                    rest_time: 162,
-                };
-                let binding = [reindeer];
-                let race = NormalRace::new(&binding);
-                assert_eq!(race.clone().after(1).distances[0], 16);
-                assert_eq!(race.clone().after(10).distances[0], 160);
-                assert_eq!(race.clone().after(11).distances[0], 176);
-                assert_eq!(race.clone().after(12).distances[0], 176);
-                assert_eq!(race.clone().after(174).distances[0], 192);
-                assert_eq!(race.clone().after(186).distances[0], 352);
-                assert_eq!(race.clone().after(1000).distances[0], 1056);
+                let reindeers = comet_dancer_vixen();
+                let race = NormalRace::new(&reindeers);
+                assert_eq!(race.clone().after(1).distances[1], 16);
+                assert_eq!(race.clone().after(10).distances[1], 160);
+                assert_eq!(race.clone().after(11).distances[1], 176);
+                assert_eq!(race.clone().after(12).distances[1], 176);
+                assert_eq!(race.clone().after(174).distances[1], 192);
+                assert_eq!(race.clone().after(186).distances[1], 352);
+                assert_eq!(race.clone().after(1000).distances[1], 1056);
             }
         }
     }
