@@ -81,7 +81,6 @@ impl<'a> Race for NormalRace<'a> {
 #[derive(Debug, Clone)]
 pub struct JudgedRace<'a, J> {
     race: NormalRace<'a>,
-    scores: Vec<u32>,
     judge: J,
 }
 
@@ -91,12 +90,7 @@ where
 {
     pub fn new(reindeers: &'a [Reindeer], judge: J) -> JudgedRace<'a, J> {
         let race = NormalRace::new(reindeers);
-        let len = race.reindeers.len();
-        JudgedRace {
-            race,
-            judge,
-            scores: vec![0; len],
-        }
+        JudgedRace { race, judge }
     }
 }
 
@@ -107,19 +101,15 @@ where
     fn after(mut self, secs: u32) -> Self {
         for _ in 0..secs {
             self.race.after_one_sec();
-            let scores_diffs = self.judge.calculate_scores(&self.race);
-            self.scores = self
-                .scores
-                .iter()
-                .zip(scores_diffs)
-                .map(|(&s, d)| s + d)
-                .collect();
+            self.judge.after_one_sec(&self.race);
         }
         self
     }
 
     fn scores(&self) -> Vec<u32> {
-        self.scores.clone()
+        self.judge
+            .scores()
+            .unwrap_or(vec![0; self.reindeers().len()])
     }
 
     fn reindeers(&self) -> &[&Reindeer] {
@@ -176,7 +166,7 @@ mod tests {
         /// system, Dancer would win (if the race ended at 1000 seconds).
         fn judge_works() {
             let reindeers = comet_dancer_vixen();
-            let judged_race = JudgedRace::new(&reindeers[0..2], LeadingReindeerJudge);
+            let judged_race = JudgedRace::new(&reindeers[0..2], LeadingReindeerJudge::new());
 
             assert_eq!(judged_race.clone().after(1).scores(), vec![0, 1]);
             assert_eq!(judged_race.clone().after(140).scores(), vec![1, 139]);

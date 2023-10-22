@@ -1,22 +1,50 @@
 use super::NormalRace;
 
 pub trait Judge {
-    fn calculate_scores(&self, race: &NormalRace) -> Vec<u32>;
+    fn after_one_sec(&mut self, race: &NormalRace);
+
+    /// Should return None only if it was never called.
+    fn scores(&self) -> Option<Vec<u32>>;
 }
 
 #[derive(Debug, Clone)]
-pub struct LeadingReindeerJudge;
+pub struct LeadingReindeerJudge {
+    scores: Option<Vec<u32>>,
+}
+
+impl LeadingReindeerJudge {
+    pub fn new() -> Self {
+        Self { scores: None }
+    }
+
+    fn init(&mut self, len: usize) {
+        self.scores = Some(vec![0; len]);
+    }
+}
 
 impl Judge for LeadingReindeerJudge {
-    fn calculate_scores(&self, race: &NormalRace) -> Vec<u32> {
-        if race.reindeers.is_empty() {
-            return vec![];
+    fn after_one_sec(&mut self, race: &NormalRace) {
+        if self.scores.is_none() {
+            self.init(race.reindeers.len());
+        }
+        if race.reindeers().is_empty() {
+            return;
         }
         let max = *race.distances.iter().max().unwrap();
-        race.distances
-            .iter()
-            .map(|&d| if d == max { 1 } else { 0 })
-            .collect()
+        let diffs = race.distances.iter().map(|&d| if d == max { 1 } else { 0 });
+        self.scores = Some(
+            self.scores
+                .as_mut()
+                .unwrap()
+                .iter()
+                .zip(diffs)
+                .map(|(&s, d)| s + d)
+                .collect(),
+        );
+    }
+
+    fn scores(&self) -> Option<Vec<u32>> {
+        self.scores.clone()
     }
 }
 
@@ -41,9 +69,9 @@ mod tests {
                 let reindeers = vec![];
                 let race = NormalRace::new(&reindeers);
 
-                let judge = LeadingReindeerJudge;
-                let scores = judge.calculate_scores(&race);
-                assert_eq!(scores, vec![]);
+                let mut judge = LeadingReindeerJudge::new();
+                judge.after_one_sec(&race);
+                assert_eq!(judge.scores().unwrap(), vec![]);
             }
 
             #[test]
@@ -52,9 +80,9 @@ mod tests {
                 let mut race = NormalRace::new(&reindeers);
                 race.distances = vec![1, 5, 3];
 
-                let judge = LeadingReindeerJudge;
-                let scores = judge.calculate_scores(&race);
-                assert_eq!(scores, vec![0, 1, 0]);
+                let mut judge = LeadingReindeerJudge::new();
+                judge.after_one_sec(&race);
+                assert_eq!(judge.scores().unwrap(), vec![0, 1, 0]);
             }
 
             #[test]
@@ -63,9 +91,9 @@ mod tests {
                 let mut race = NormalRace::new(&reindeers);
                 race.distances = vec![3, 1, 3];
 
-                let judge = LeadingReindeerJudge;
-                let scores = judge.calculate_scores(&race);
-                assert_eq!(scores, vec![1, 0, 1]);
+                let mut judge = LeadingReindeerJudge::new();
+                judge.after_one_sec(&race);
+                assert_eq!(judge.scores().unwrap(), vec![1, 0, 1]);
             }
         }
     }

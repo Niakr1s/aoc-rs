@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Part1:");
     run(normal_race)?;
 
-    let judged_race = JudgedRace::new(&reindeers, LeadingReindeerJudge);
+    let judged_race = JudgedRace::new(&reindeers, LeadingReindeerJudge::new());
     println!("Part2:");
     run(judged_race)?;
 
