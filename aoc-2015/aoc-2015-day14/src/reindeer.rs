@@ -1,3 +1,4 @@
+#[derive(Debug, Clone)]
 pub struct Reindeer {
     pub name: String,
     pub speed: u32,

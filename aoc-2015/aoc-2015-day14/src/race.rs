@@ -1,38 +1,57 @@
 use crate::reindeer::Reindeer;
 
-pub struct Race;
+#[derive(Debug, Clone)]
+pub struct Race<'a> {
+    elapsed: u32,
+    reindeers: Vec<&'a Reindeer>,
+    states: Vec<ReindeerState>,
+    distances: Vec<u32>,
+}
 
-impl Race {
-    pub fn get_distances_after(reindeers: &[Reindeer], time: u32) -> Vec<u32> {
-        reindeers
-            .iter()
-            .map(|r| Race::get_distance_after(r, time))
-            .collect()
+pub struct Score<'a> {
+    pub reindeer: &'a Reindeer,
+    pub score: u32,
+}
+
+impl<'a> Race<'a> {
+    pub fn new(reindeers: &'a [Reindeer]) -> Race<'a> {
+        Race {
+            elapsed: 0,
+            reindeers: reindeers.iter().collect(),
+            states: vec![ReindeerState::Flying(0); reindeers.len()],
+            distances: vec![0; reindeers.len()],
+        }
     }
 
-    pub fn get_distance_after(reindeer: &Reindeer, time: u32) -> u32 {
-        let mut state = ReindeerState::Flying(0);
-        let mut distance = 0;
+    pub fn after(mut self, secs: u32) -> Race<'a> {
+        (0..secs).for_each(|_| self.after_one_sec());
+        self
+    }
 
-        for _elapsed_time in 1..=time {
-            state.add_one_sec();
+    fn after_one_sec(&mut self) {
+        self.elapsed += 1;
 
-            match state {
+        for (i, &reindeer) in self.reindeers.iter().enumerate() {
+            self.states[i].add_one_sec();
+
+            match self.states[i] {
                 ReindeerState::Flying(flied_time) => {
-                    distance += reindeer.speed;
+                    self.distances[i] += reindeer.speed;
                     if flied_time == reindeer.fly_time {
-                        state.switch_state()
+                        self.states[i].switch_state()
                     }
                 }
                 ReindeerState::Resting(rested_time) => {
                     if rested_time == reindeer.rest_time {
-                        state.switch_state()
+                        self.states[i].switch_state()
                     }
                 }
             }
         }
+    }
 
-        distance
+    pub fn distances(&self) -> &[u32] {
+        self.distances.as_ref()
     }
 }
 
@@ -96,13 +115,15 @@ mod tests {
                 fly_time: 10,
                 rest_time: 127,
             };
-            assert_eq!(Race::get_distance_after(&reindeer, 1), 14);
-            assert_eq!(Race::get_distance_after(&reindeer, 10), 140);
-            assert_eq!(Race::get_distance_after(&reindeer, 11), 140);
-            assert_eq!(Race::get_distance_after(&reindeer, 12), 140);
-            assert_eq!(Race::get_distance_after(&reindeer, 138), 154);
-            assert_eq!(Race::get_distance_after(&reindeer, 147), 280);
-            assert_eq!(Race::get_distance_after(&reindeer, 1000), 1120);
+            let binding = [reindeer];
+            let race = Race::new(&binding);
+            assert_eq!(race.clone().after(1).distances[0], 14);
+            assert_eq!(race.clone().after(10).distances[0], 140);
+            assert_eq!(race.clone().after(11).distances[0], 140);
+            assert_eq!(race.clone().after(12).distances[0], 140);
+            assert_eq!(race.clone().after(138).distances[0], 154);
+            assert_eq!(race.clone().after(147).distances[0], 280);
+            assert_eq!(race.clone().after(1000).distances[0], 1120);
         }
 
         #[test]
@@ -113,13 +134,15 @@ mod tests {
                 fly_time: 11,
                 rest_time: 162,
             };
-            assert_eq!(Race::get_distance_after(&reindeer, 1), 16);
-            assert_eq!(Race::get_distance_after(&reindeer, 10), 160);
-            assert_eq!(Race::get_distance_after(&reindeer, 11), 176);
-            assert_eq!(Race::get_distance_after(&reindeer, 12), 176);
-            assert_eq!(Race::get_distance_after(&reindeer, 174), 192);
-            assert_eq!(Race::get_distance_after(&reindeer, 186), 352);
-            assert_eq!(Race::get_distance_after(&reindeer, 1000), 1056);
+            let binding = [reindeer];
+            let race = Race::new(&binding);
+            assert_eq!(race.clone().after(1).distances[0], 16);
+            assert_eq!(race.clone().after(10).distances[0], 160);
+            assert_eq!(race.clone().after(11).distances[0], 176);
+            assert_eq!(race.clone().after(12).distances[0], 176);
+            assert_eq!(race.clone().after(174).distances[0], 192);
+            assert_eq!(race.clone().after(186).distances[0], 352);
+            assert_eq!(race.clone().after(1000).distances[0], 1056);
         }
     }
 }

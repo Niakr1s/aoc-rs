@@ -10,8 +10,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .lines()
         .flat_map(|line| line.map(|line| Reindeer::from_aoc_line(&line)))
         .collect::<Result<Vec<_>, _>>()?;
-    let distances = Race::get_distances_after(&reindeers, 2503);
-    let (winner, distance) = distances
+    let race = Race::new(&reindeers);
+    let race = race.after(2503);
+    let (winner, distance) = race
+        .distances()
         .iter()
         .enumerate()
         .max_by_key(|(_, &d)| d)
