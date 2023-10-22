@@ -1,6 +1,6 @@
 use std::io::BufRead;
 
-use aoc_2015_day14::{Race, Reindeer};
+use aoc_2015_day14::{reindeer::Reindeer, Race};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filepath = helpers::get_filepath_from_args();
