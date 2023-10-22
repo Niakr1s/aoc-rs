@@ -75,7 +75,8 @@ impl<'a, J> JudgedRace<'a, J>
 where
     J: Judge + Clone,
 {
-    pub fn new(race: NormalRace<'a>, judge: J) -> JudgedRace<'a, J> {
+    pub fn new(reindeers: &'a [Reindeer], judge: J) -> JudgedRace<'a, J> {
+        let race = NormalRace::new(reindeers);
         let len = race.reindeers.len();
         JudgedRace {
             race,
@@ -153,8 +154,7 @@ mod tests {
         /// system, Dancer would win (if the race ended at 1000 seconds).
         fn judge_works() {
             let reindeers = comet_dancer_vixen();
-            let normal_race = NormalRace::new(&reindeers[0..2]);
-            let judged_race = JudgedRace::new(normal_race, LeadingReindeerJudge);
+            let judged_race = JudgedRace::new(&reindeers[0..2], LeadingReindeerJudge);
 
             assert_eq!(judged_race.clone().after(1).scores(), vec![0, 1]);
             assert_eq!(judged_race.clone().after(140).scores(), vec![1, 139]);
