@@ -13,11 +13,6 @@ pub struct NormalRace<'a> {
     distances: Vec<u32>,
 }
 
-pub struct Score<'a> {
-    pub reindeer: &'a Reindeer,
-    pub score: u32,
-}
-
 impl<'a> NormalRace<'a> {
     pub fn new(reindeers: &'a [Reindeer]) -> NormalRace<'a> {
         NormalRace {
