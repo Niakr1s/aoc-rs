@@ -12,12 +12,12 @@ bitflags! {
     }
 }
 
-pub struct Cookie {
-    pub ingridients: Vec<(Ingredient, u32)>,
+pub struct Cookie<'a> {
+    pub ingridients: Vec<(&'a Ingredient, u32)>,
 }
 
-impl Cookie {
-    pub fn new(ingridients: Vec<(Ingredient, u32)>) -> Self {
+impl<'a> Cookie<'a> {
+    pub fn new(ingridients: Vec<(&'a Ingredient, u32)>) -> Self {
         Self { ingridients }
     }
 
@@ -176,64 +176,74 @@ mod tests {
     mod cookie {
         use super::*;
 
-        fn cookie() -> Cookie {
-            Cookie::new(vec![
-                (
-                    Ingredient::from_str(
-                        "Butterscotch: capacity -1, durability -2, flavor 6, texture 3, calories 8",
-                    )
-                    .unwrap(),
-                    44,
-                ),
-                (
-                    Ingredient::from_str(
-                        "Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3",
-                    )
-                    .unwrap(),
-                    56,
-                ),
-            ])
+        fn ingridients() -> Vec<(Ingredient, u32)> {
+            let ingridients =
+                vec![
+             (   Ingredient::from_str(
+                    "Butterscotch: capacity -1, durability -2, flavor 6, texture 3, calories 8",
+                )
+                .unwrap(),44),
+                (Ingredient::from_str(
+                    "Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3",
+                )
+                .unwrap(),56)
+            ];
+            ingridients
+            // let amounts = vec![44, 56];
+            // let cookie = Cookie::new(ingridients.iter().zip(amounts.into_iter()).collect());
+            // (cookie, ingridients)
+        }
+
+        fn cookie(ingridients: &[(Ingredient, u32)]) -> Cookie<'_> {
+            Cookie::new(ingridients.iter().map(|(i, c)| (i, *c)).collect())
         }
 
         #[test]
         fn capacity() {
-            let cookie = cookie();
+            let ingridients = ingridients();
+            let cookie = cookie(ingridients.as_slice());
             assert_eq!(cookie.capacity(), 68);
         }
 
         #[test]
         fn durability() {
-            let cookie = cookie();
+            let ingridients = ingridients();
+            let cookie = cookie(ingridients.as_slice());
             assert_eq!(cookie.durability(), 80);
         }
 
         #[test]
         fn flavor() {
-            let cookie = cookie();
+            let ingridients = ingridients();
+            let cookie = cookie(ingridients.as_slice());
             assert_eq!(cookie.flavor(), 152);
         }
 
         #[test]
         fn texture() {
-            let cookie = cookie();
+            let ingridients = ingridients();
+            let cookie = cookie(ingridients.as_slice());
             assert_eq!(cookie.texture(), 76);
         }
 
         #[test]
         fn calories() {
-            let cookie = cookie();
+            let ingridients = ingridients();
+            let cookie = cookie(ingridients.as_slice());
             assert_eq!(cookie.calories(), 520);
         }
 
         #[test]
         fn score_without_calories() {
-            let cookie = cookie();
+            let ingridients = ingridients();
+            let cookie = cookie(ingridients.as_slice());
             assert_eq!(cookie.score_without_calories(), 62842880);
         }
 
         #[test]
         fn score() {
-            let cookie = cookie();
+            let ingridients = ingridients();
+            let cookie = cookie(ingridients.as_slice());
             assert_eq!(
                 cookie.score_incl(
                     Property::Capacity
@@ -247,7 +257,8 @@ mod tests {
 
         #[test]
         fn score_durability_is_negative() {
-            let mut cookie = cookie();
+            let ingridients = ingridients();
+            let mut cookie = cookie(ingridients.as_slice());
             // making butterscotch count to 150, so cookie's durability will be (150 * -2) + 56 * 3 = -132
             cookie.ingridients[0].1 = 150;
             assert_eq!(cookie.durability(), 0);

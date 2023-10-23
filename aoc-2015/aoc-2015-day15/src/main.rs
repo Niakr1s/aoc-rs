@@ -12,6 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .lines()
         .flat_map(|l| l.map(|l| l.parse::<Ingredient>()))
         .collect::<Result<Vec<Ingredient>, _>>()?;
+    let ingridients = ingridients.iter().collect::<Vec<_>>();
 
     let best_score1 = find_best_score(ingridients.as_slice());
     println!("Part1: best score: {:?}", best_score1);
@@ -26,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn find_best_score_if(
-    ingridients: &[Ingredient],
+    ingridients: &[&Ingredient],
     predicate: impl Fn(&Cookie) -> bool,
 ) -> Option<u32> {
     (0..ingridients.len())
@@ -36,7 +37,7 @@ fn find_best_score_if(
                 .into_iter()
                 .counts()
                 .into_iter()
-                .map(|c| (ingridients[c.0].clone(), c.1 as u32))
+                .map(|c| (ingridients[c.0], c.1 as u32))
                 .collect::<Vec<_>>();
             let cookie = Cookie::new(ingridients);
             if predicate(&cookie) {
@@ -48,6 +49,6 @@ fn find_best_score_if(
         .max()
 }
 
-fn find_best_score(ingridients: &[Ingredient]) -> Option<u32> {
+fn find_best_score(ingridients: &[&Ingredient]) -> Option<u32> {
     find_best_score_if(ingridients, |_| true)
 }
