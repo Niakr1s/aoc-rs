@@ -18,6 +18,37 @@ impl Facts {
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum ParseError {
+    #[error("Invalid input: {0}")]
+    InvalidStr(&'static str),
+    #[error("ParseIntError")]
+    ParseIntError(#[from] std::num::ParseIntError),
+}
+
+impl std::str::FromStr for Facts {
+    type Err = ParseError;
+
+    /// Example:
+    ///
+    /// goldfish: 10, trees: 8, perfumes: 6
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut iter = s.split(", ");
+        let mut facts = HashMap::new();
+        while let Some(fact_with_amount) = iter.next() {
+            let (fact, amount) =
+                fact_with_amount
+                    .split_once(": ")
+                    .ok_or(ParseError::InvalidStr(
+                        "fact and amount should be separated by ': '",
+                    ))?;
+
+            facts.insert(fact.to_owned(), amount.parse()?);
+        }
+        Ok(Facts(facts))
+    }
+}
+
 #[cfg(test)]
 #[allow(unused_imports)]
 mod tests {
@@ -25,6 +56,20 @@ mod tests {
 
     mod facts {
         use super::*;
+
+        mod from_str {
+            use super::*;
+
+            #[test]
+            fn works() {
+                let input = "cars: 9, akitas: 3, goldfish: 0";
+                let facts = input.parse::<Facts>().unwrap();
+                assert_eq!(facts.len(), 3);
+                assert_eq!(facts["cars"], 9);
+                assert_eq!(facts["akitas"], 3);
+                assert_eq!(facts["goldfish"], 0);
+            }
+        }
 
         mod possible_eq {
             use super::*;
