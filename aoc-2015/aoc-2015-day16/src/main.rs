@@ -1,6 +1,9 @@
-use std::{collections::HashMap, io::BufRead, str::FromStr};
+use std::{cmp::Ordering, collections::HashMap, io::BufRead, str::FromStr};
 
-use aoc_2015_day16::aunt_sue::{facts::Facts, AuntSue};
+use aoc_2015_day16::aunt_sue::{
+    facts::{Facts, FactsMatcher},
+    AuntSue,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filepath = helpers::get_filepath_from_args();
@@ -25,13 +28,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("perfumes".to_owned(), 1),
     ]));
 
-    let possible_aunts = aunts
-        .iter()
-        .filter(|&aunt| known_facts.possible_match(&aunt.facts))
-        .map(|aunt| aunt.no)
-        .collect::<Vec<_>>();
+    let mut matcher = FactsMatcher::new();
 
-    println!("Part1: possible aunts are {:?}", possible_aunts);
+    let possible_aunts = find_possible_aunts(aunts.iter(), &known_facts, &matcher);
+    println!(
+        "Part1: found {} possible aunts: {:?}",
+        possible_aunts.len(),
+        possible_aunts
+    );
+
+    matcher = matcher
+        .with_ord("cats", Ordering::Greater)
+        .with_ord("trees", Ordering::Greater)
+        .with_ord("pomeranians", Ordering::Less)
+        .with_ord("goldfish", Ordering::Less);
+    let possible_aunts = find_possible_aunts(aunts.iter(), &known_facts, &matcher);
+    println!(
+        "Part2: found {} possible aunts: {:?}",
+        possible_aunts.len(),
+        possible_aunts
+    );
 
     Ok(())
+}
+
+fn find_possible_aunts<'a>(
+    aunts: impl Iterator<Item = &'a AuntSue>,
+    known_facts: &Facts,
+    matcher: &FactsMatcher,
+) -> Vec<u32> {
+    aunts
+        .filter(|&aunt| matcher.is_possible_match(&known_facts, &aunt.facts))
+        .map(|aunt| aunt.no)
+        .collect()
 }
