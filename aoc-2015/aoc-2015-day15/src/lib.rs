@@ -54,7 +54,8 @@ impl Cookie {
         self.ingridients
             .iter()
             .map(|(i, c)| prop_extractor(i) * (*c as i32))
-            .sum()
+            .sum::<i32>()
+            .max(0)
     }
 
     pub fn capacity(&self) -> i32 {
@@ -194,8 +195,6 @@ mod tests {
             ])
         }
 
-        use super::*;
-
         #[test]
         fn capacity() {
             let cookie = cookie();
@@ -244,6 +243,15 @@ mod tests {
                 ),
                 62842880
             );
+        }
+
+        #[test]
+        fn score_durability_is_negative() {
+            let mut cookie = cookie();
+            // making butterscotch count to 150, so cookie's durability will be (150 * -2) + 56 * 3 = -132
+            cookie.ingridients[0].1 = 150;
+            assert_eq!(cookie.durability(), 0);
+            assert_eq!(cookie.score_without_calories(), 0);
         }
     }
 
