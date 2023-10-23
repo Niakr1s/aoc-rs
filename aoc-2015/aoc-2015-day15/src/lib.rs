@@ -1,4 +1,82 @@
+use bitflags::bitflags;
 use std::str::FromStr;
+
+bitflags! {
+    #[derive(Debug, PartialEq, Clone, Copy)]
+    pub struct Property: u8 {
+        const Capacity = 1 << 0;
+        const Durability = 1 << 1;
+        const Flavor = 1 << 2;
+        const Texture = 1 << 3;
+        const Calories = 1 << 4;
+    }
+}
+
+pub struct Cookie {
+    pub ingridients: Vec<(Ingredient, u32)>,
+}
+
+impl Cookie {
+    pub fn new(ingridients: Vec<(Ingredient, u32)>) -> Self {
+        Self { ingridients }
+    }
+
+    pub fn score_without_calories(&self) -> i32 {
+        self.score_incl(
+            Property::Capacity | Property::Durability | Property::Flavor | Property::Texture,
+        )
+    }
+
+    fn score_incl(&self, incl: Property) -> i32 {
+        let mut props = vec![];
+        if incl & Property::Capacity != Property::empty() {
+            props.push(self.capacity());
+        }
+        if incl & Property::Durability != Property::empty() {
+            props.push(self.durability());
+        }
+        if incl & Property::Flavor != Property::empty() {
+            props.push(self.flavor());
+        }
+        if incl & Property::Texture != Property::empty() {
+            props.push(self.texture());
+        }
+        if incl & Property::Calories != Property::empty() {
+            props.push(self.calories());
+        }
+        props.into_iter().product()
+    }
+
+    fn prop<F>(&self, mut prop_extractor: F) -> i32
+    where
+        F: FnMut(&Ingredient) -> i32,
+    {
+        self.ingridients
+            .iter()
+            .map(|(i, c)| prop_extractor(i) * (*c as i32))
+            .sum()
+    }
+
+    pub fn capacity(&self) -> i32 {
+        self.prop(|i| i.capacity)
+    }
+
+    pub fn durability(&self) -> i32 {
+        self.prop(|i| i.durability)
+    }
+
+    pub fn flavor(&self) -> i32 {
+        self.prop(|i| i.flavor)
+    }
+
+    pub fn texture(&self) -> i32 {
+        self.prop(|i| i.texture)
+    }
+
+    pub fn calories(&self) -> i32 {
+        self.prop(|i| i.calories)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ingredient {
@@ -93,6 +171,81 @@ impl FromStr for Ingredient {
 #[allow(unused_imports)]
 mod tests {
     use super::*;
+
+    mod cookie {
+        use super::*;
+
+        fn cookie() -> Cookie {
+            Cookie::new(vec![
+                (
+                    Ingredient::from_str(
+                        "Butterscotch: capacity -1, durability -2, flavor 6, texture 3, calories 8",
+                    )
+                    .unwrap(),
+                    44,
+                ),
+                (
+                    Ingredient::from_str(
+                        "Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3",
+                    )
+                    .unwrap(),
+                    56,
+                ),
+            ])
+        }
+
+        use super::*;
+
+        #[test]
+        fn capacity() {
+            let cookie = cookie();
+            assert_eq!(cookie.capacity(), 68);
+        }
+
+        #[test]
+        fn durability() {
+            let cookie = cookie();
+            assert_eq!(cookie.durability(), 80);
+        }
+
+        #[test]
+        fn flavor() {
+            let cookie = cookie();
+            assert_eq!(cookie.flavor(), 152);
+        }
+
+        #[test]
+        fn texture() {
+            let cookie = cookie();
+            assert_eq!(cookie.texture(), 76);
+        }
+
+        #[test]
+        fn calories() {
+            let cookie = cookie();
+            assert_eq!(cookie.calories(), 520);
+        }
+
+        #[test]
+        fn score_without_calories() {
+            let cookie = cookie();
+            assert_eq!(cookie.score_without_calories(), 62842880);
+        }
+
+        #[test]
+        fn score() {
+            let cookie = cookie();
+            assert_eq!(
+                cookie.score_incl(
+                    Property::Capacity
+                        | Property::Durability
+                        | Property::Flavor
+                        | Property::Texture
+                ),
+                62842880
+            );
+        }
+    }
 
     mod ingredient {
         use super::*;
