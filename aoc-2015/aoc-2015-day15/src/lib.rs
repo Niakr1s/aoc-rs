@@ -21,13 +21,13 @@ impl Cookie {
         Self { ingridients }
     }
 
-    pub fn score_without_calories(&self) -> i32 {
+    pub fn score_without_calories(&self) -> u32 {
         self.score_incl(
             Property::Capacity | Property::Durability | Property::Flavor | Property::Texture,
         )
     }
 
-    fn score_incl(&self, incl: Property) -> i32 {
+    fn score_incl(&self, incl: Property) -> u32 {
         let mut props = vec![];
         if incl & Property::Capacity != Property::empty() {
             props.push(self.capacity());
@@ -47,7 +47,7 @@ impl Cookie {
         props.into_iter().product()
     }
 
-    fn prop<F>(&self, mut prop_extractor: F) -> i32
+    fn prop<F>(&self, mut prop_extractor: F) -> u32
     where
         F: FnMut(&Ingredient) -> i32,
     {
@@ -55,26 +55,26 @@ impl Cookie {
             .iter()
             .map(|(i, c)| prop_extractor(i) * (*c as i32))
             .sum::<i32>()
-            .max(0)
+            .max(0) as u32
     }
 
-    pub fn capacity(&self) -> i32 {
+    pub fn capacity(&self) -> u32 {
         self.prop(|i| i.capacity)
     }
 
-    pub fn durability(&self) -> i32 {
+    pub fn durability(&self) -> u32 {
         self.prop(|i| i.durability)
     }
 
-    pub fn flavor(&self) -> i32 {
+    pub fn flavor(&self) -> u32 {
         self.prop(|i| i.flavor)
     }
 
-    pub fn texture(&self) -> i32 {
+    pub fn texture(&self) -> u32 {
         self.prop(|i| i.texture)
     }
 
-    pub fn calories(&self) -> i32 {
+    pub fn calories(&self) -> u32 {
         self.prop(|i| i.calories)
     }
 }
