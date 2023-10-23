@@ -1,9 +1,13 @@
 pub mod aunt_sue {
+    pub mod facts;
+
     use std::collections::HashMap;
+
+    use self::facts::Facts;
 
     pub struct AuntSue {
         pub no: u32,
-        pub facts: HashMap<String, u32>,
+        pub facts: Facts,
     }
 
     #[derive(Debug, thiserror::Error)]
@@ -44,7 +48,10 @@ pub mod aunt_sue {
                 facts.insert(fact.to_owned(), amount);
             }
 
-            Ok(AuntSue { no, facts })
+            Ok(AuntSue {
+                no,
+                facts: Facts(facts),
+            })
         }
     }
 
