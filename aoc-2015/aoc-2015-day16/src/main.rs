@@ -27,11 +27,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let possible_aunts = aunts
         .iter()
-        .filter(|&aunt| known_facts.possible_eq(&aunt.facts))
+        .filter(|&aunt| known_facts.possible_match(&aunt.facts))
         .map(|aunt| aunt.no)
         .collect::<Vec<_>>();
 
-    println!("{:?}", possible_aunts);
+    println!("Part1: possible aunts are {:?}", possible_aunts);
 
     Ok(())
 }

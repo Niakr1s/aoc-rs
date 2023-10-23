@@ -6,7 +6,7 @@ pub struct Facts(pub HashMap<String, u32>);
 impl Facts {
     /// Returns true if other's keys are in subset of this's keys and they are
     /// eqeual to this's values.
-    pub fn possible_eq(&self, other: &Self) -> bool {
+    pub fn possible_match(&self, other: &Self) -> bool {
         let self_keys = self.keys().collect::<HashSet<_>>();
         let other_keys = other.keys().collect::<HashSet<_>>();
 
@@ -82,7 +82,7 @@ mod tests {
                     ("c".to_owned(), 3),
                 ]));
                 let other = Facts(HashMap::from([("a".to_owned(), 1), ("b".to_owned(), 2)]));
-                assert_eq!(facts.possible_eq(&other), true);
+                assert_eq!(facts.possible_match(&other), true);
             }
 
             #[test]
@@ -93,7 +93,7 @@ mod tests {
                     ("c".to_owned(), 3),
                 ]));
                 let other = Facts(HashMap::from([("a".to_owned(), 1), ("b".to_owned(), 3)]));
-                assert_eq!(facts.possible_eq(&other), false);
+                assert_eq!(facts.possible_match(&other), false);
             }
 
             #[test]
@@ -104,7 +104,7 @@ mod tests {
                     ("c".to_owned(), 3),
                 ]));
                 let other = Facts(HashMap::from([("a".to_owned(), 1), ("d".to_owned(), 2)]));
-                assert_eq!(facts.possible_eq(&other), false);
+                assert_eq!(facts.possible_match(&other), false);
             }
         }
     }
