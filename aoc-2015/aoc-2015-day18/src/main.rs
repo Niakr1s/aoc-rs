@@ -1,0 +1,12 @@
+use std::str::FromStr;
+
+use aoc_2015_day18::light::Grid;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let filepath = helpers::get_filepath_from_args();
+    let contents = std::fs::read_to_string(filepath)?;
+
+    let grid = Grid::from_str(&contents)?;
+
+    Ok(())
+}
