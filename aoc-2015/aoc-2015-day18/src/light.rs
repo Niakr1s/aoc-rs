@@ -47,13 +47,22 @@ pub struct Grid {
 
 impl Grid {
     pub fn with_stucked_corners(self) -> Self {
-        // TODO this can panic if grid is a line
-        let corners = vec![
-            (0, 0),
-            (0, self.cols() - 1),
-            (self.rows() - 1, 0),
-            (self.rows() - 1, self.cols() - 1),
-        ];
+        let (rows, cols) = (self.rows(), self.cols());
+        if rows == 0 && cols == 0 {
+            return self;
+        }
+
+        let mut corners = vec![(0, 0)];
+        if cols > 1 {
+            corners.push((0, cols - 1));
+        }
+        if rows > 1 {
+            corners.push((rows - 1, 0));
+        }
+        if cols > 1 && rows > 1 {
+            corners.push((rows - 1, cols - 1));
+        }
+
         self.with_stucked(corners)
     }
 
