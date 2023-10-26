@@ -39,12 +39,32 @@ pub enum PosError {
     InvalidCol { got: usize, max: usize },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Grid {
     lights: Vec<Vec<Light>>,
+    stucked: Vec<(usize, usize)>,
 }
 
 impl Grid {
+    pub fn with_stucked_corners(self) -> Self {
+        // TODO this can panic if grid is a line
+        let corners = vec![
+            (0, 0),
+            (0, self.cols() - 1),
+            (self.rows() - 1, 0),
+            (self.rows() - 1, self.cols() - 1),
+        ];
+        self.with_stucked(corners)
+    }
+
+    pub fn with_stucked(mut self, mut stucked: Vec<(usize, usize)>) -> Self {
+        for (row, col) in &stucked {
+            self.lights[*row][*col] = Light::On;
+        }
+        self.stucked.append(&mut stucked);
+        self
+    }
+
     pub fn next_step(&self) -> Self {
         let next_lights = self
             .lights
@@ -55,6 +75,9 @@ impl Grid {
                     .iter()
                     .enumerate()
                     .map(|(col, &light)| {
+                        if self.stucked.contains(&(row, col)) {
+                            return Light::On;
+                        }
                         let neighbours = self.get_neighbours(row, col).unwrap();
                         let count_on = neighbours.count_on();
                         match light {
@@ -79,6 +102,7 @@ impl Grid {
             .collect::<Vec<_>>();
         Grid {
             lights: next_lights,
+            stucked: self.stucked.clone(),
         }
     }
 
@@ -187,7 +211,10 @@ impl FromStr for Grid {
             }
         }
 
-        Ok(Grid { lights })
+        Ok(Grid {
+            lights,
+            stucked: vec![],
+        })
     }
 }
 
@@ -198,6 +225,29 @@ mod tests {
 
     mod grid {
         use super::*;
+
+        mod with_stucked_corners {
+            use super::*;
+
+            #[test]
+            fn turns_on_corners() {
+                const INPUT: &str = r#"
+                .#.#.#
+                ...##.
+                #....#
+                ..#...
+                #.#..#
+                ####..
+"#;
+
+                let grid = INPUT.parse::<Grid>().unwrap();
+                let grid = grid.with_stucked_corners();
+                assert_eq!(grid.lights[0][0], Light::On);
+                assert_eq!(grid.lights[0][5], Light::On);
+                assert_eq!(grid.lights[5][0], Light::On);
+                assert_eq!(grid.lights[5][5], Light::On);
+            }
+        }
 
         mod next_step {
             use super::*;
@@ -245,13 +295,77 @@ mod tests {
 "#,
             ];
 
+            const STUCKED_STEPS: &[&'static str] = &[
+                r#"
+                ##.#.#
+                ...##.
+                #....#
+                ..#...
+                #.#..#
+                ####.#
+"#,
+                r#"
+                #.##.#
+                ####.#
+                ...##.
+                ......
+                #...#.
+                #.####
+"#,
+                r#"
+                #..#.#
+                #....#
+                .#.##.
+                ...##.
+                .#..##
+                ##.###
+"#,
+                r#"
+                #...##
+                ####.#
+                ..##.#
+                ......
+                ##....
+                ####.#
+"#,
+                r#"
+                #.####
+                #....#
+                ...#..
+                .##...
+                #.....
+                #.#..#
+"#,
+                r#"
+                ##.###
+                .##..#
+                .##...
+                .##...
+                #.#...
+                ##...#
+"#,
+            ];
+
             #[test]
             fn works() {
-                let mut grid: Grid = STEPS[0].parse().unwrap();
+                let mut grid = STEPS[0].parse::<Grid>().unwrap();
                 for &step in &STEPS[1..] {
                     let wanted_grid: Grid = step.parse().unwrap();
                     grid = grid.next_step();
                     assert_eq!(grid, wanted_grid);
+                }
+            }
+
+            #[test]
+            fn works_with_stucked_corners() {
+                let mut grid = STUCKED_STEPS[0]
+                    .parse::<Grid>()
+                    .unwrap()
+                    .with_stucked_corners();
+                for &step in &STUCKED_STEPS[1..] {
+                    let wanted_grid: Grid = step.parse().unwrap();
+                    grid = grid.next_step();
+                    assert_eq!(grid.lights, wanted_grid.lights);
                 }
             }
         }
