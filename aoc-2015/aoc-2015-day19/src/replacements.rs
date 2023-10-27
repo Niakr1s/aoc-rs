@@ -21,19 +21,32 @@ impl Replacements {
     }
 }
 
-pub fn steps(start: &str, want: &str, replacements: &Replacements) -> Option<usize> {
-    // println!("\n{} -> {}\n", start, want);
-    if start == want {
-        return Some(0);
-    } else if start.len() >= want.len() {
-        return None;
+pub fn downgrade_steps_inner(
+    start: &str,
+    replacements: &Replacements,
+    depth: usize,
+    min_steps: &mut usize,
+) {
+    // println!("{}{}", " ".repeat(depth), start);
+    if start == "e" {
+        let min = (*min_steps).min(depth);
+        *min_steps = min;
+        return;
+    }
+    if depth >= *min_steps {
+        return;
     }
 
     replacements
-        .distinct_moleculas(start)
-        .into_iter()
-        .filter_map(|repl| steps(&repl, want, replacements).map(|i| i + 1))
-        .min()
+        .collapsed_moleculas(start)
+        .take(1) // it works only with this, otherwise endless loop, dunno why =\
+        .for_each(|repl| downgrade_steps_inner(&repl, replacements, depth + 1, min_steps));
+}
+
+pub fn downgrade_steps(start: &str, replacements: &Replacements) -> usize {
+    let mut min_steps = usize::MAX;
+    downgrade_steps_inner(start, replacements, 0, &mut min_steps);
+    min_steps
 }
 
 struct CollapsedMoleculas<'a> {
@@ -180,8 +193,12 @@ mod tests {
                 ("O".to_owned(), "HH".to_owned()),
             ];
             let r = Replacements(r);
-            assert_eq!(steps("e", "HOH", &r), Some(3));
-            assert_eq!(steps("e", "HOHOHO", &r), Some(6));
+
+            let min_steps = downgrade_steps("HOH", &r);
+            assert_eq!(min_steps, 3);
+
+            let min_steps = downgrade_steps("HOHOHO", &r);
+            assert_eq!(min_steps, 6);
         }
     }
 
