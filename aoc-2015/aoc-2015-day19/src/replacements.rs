@@ -6,22 +6,28 @@ use itertools::Itertools;
 pub struct Replacements(Vec<(String, String)>);
 
 impl Replacements {
-    pub fn distinct_moleculas<'a>(
+    pub fn upgraded_moleculas<'a>(
         &'a self,
         molecula: &'a str,
     ) -> impl Iterator<Item = String> + 'a {
-        Moleculas::new(&self.0, molecula).unique()
+        UpgradedMoleculas::new(&self.0, molecula).unique()
     }
 
-    pub fn collapsed_moleculas<'a>(
+    pub fn downgraded_moleculas<'a>(
         &'a self,
         molecula: &'a str,
     ) -> impl Iterator<Item = String> + 'a {
-        CollapsedMoleculas::new(&self.0, molecula).unique()
+        DowngradedMoleculas::new(&self.0, molecula).unique()
     }
 }
 
-pub fn downgrade_steps_inner(
+pub fn min_downgrade_steps(start: &str, replacements: &Replacements) -> usize {
+    let mut min_steps = usize::MAX;
+    downgrade_steps_inner(start, replacements, 0, &mut min_steps);
+    min_steps
+}
+
+fn downgrade_steps_inner(
     start: &str,
     replacements: &Replacements,
     depth: usize,
@@ -38,27 +44,21 @@ pub fn downgrade_steps_inner(
     }
 
     replacements
-        .collapsed_moleculas(start)
+        .downgraded_moleculas(start)
         .take(1) // it works only with this, otherwise endless loop, dunno why =\
         .for_each(|repl| downgrade_steps_inner(&repl, replacements, depth + 1, min_steps));
 }
 
-pub fn downgrade_steps(start: &str, replacements: &Replacements) -> usize {
-    let mut min_steps = usize::MAX;
-    downgrade_steps_inner(start, replacements, 0, &mut min_steps);
-    min_steps
-}
-
-struct CollapsedMoleculas<'a> {
+struct DowngradedMoleculas<'a> {
     replacements: std::slice::Iter<'a, (String, String)>,
     current_replacement: Option<&'a (String, String)>,
     molecula: &'a str,
     molecula_idx: usize,
 }
 
-impl<'a> CollapsedMoleculas<'a> {
+impl<'a> DowngradedMoleculas<'a> {
     pub fn new(replacements: &'a Vec<(String, String)>, molecula: &'a str) -> Self {
-        CollapsedMoleculas {
+        DowngradedMoleculas {
             replacements: replacements.iter(),
             current_replacement: None,
             molecula,
@@ -67,7 +67,7 @@ impl<'a> CollapsedMoleculas<'a> {
     }
 }
 
-impl<'a> Iterator for CollapsedMoleculas<'a> {
+impl<'a> Iterator for DowngradedMoleculas<'a> {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -103,16 +103,16 @@ impl<'a> Iterator for CollapsedMoleculas<'a> {
     }
 }
 
-struct Moleculas<'a> {
+struct UpgradedMoleculas<'a> {
     replacements: std::slice::Iter<'a, (String, String)>,
     current_replacement: Option<&'a (String, String)>,
     molecula: &'a str,
     molecula_idx: usize,
 }
 
-impl<'a> Moleculas<'a> {
+impl<'a> UpgradedMoleculas<'a> {
     pub fn new(replacements: &'a Vec<(String, String)>, molecula: &'a str) -> Self {
-        Moleculas {
+        UpgradedMoleculas {
             replacements: replacements.iter(),
             current_replacement: None,
             molecula,
@@ -121,7 +121,7 @@ impl<'a> Moleculas<'a> {
     }
 }
 
-impl<'a> Iterator for Moleculas<'a> {
+impl<'a> Iterator for UpgradedMoleculas<'a> {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -194,15 +194,15 @@ mod tests {
             ];
             let r = Replacements(r);
 
-            let min_steps = downgrade_steps("HOH", &r);
+            let min_steps = min_downgrade_steps("HOH", &r);
             assert_eq!(min_steps, 3);
 
-            let min_steps = downgrade_steps("HOHOHO", &r);
+            let min_steps = min_downgrade_steps("HOHOHO", &r);
             assert_eq!(min_steps, 6);
         }
     }
 
-    mod collapsed_moleculas {
+    mod downgraded_moleculas {
         use super::*;
 
         #[test]
@@ -215,14 +215,14 @@ mod tests {
                 ("O".to_owned(), "HH".to_owned()),
             ]);
             let molecula = "HOH".to_owned();
-            let mut d = replacements.collapsed_moleculas(&molecula);
+            let mut d = replacements.downgraded_moleculas(&molecula);
 
             assert_eq!(d.next(), Some("HH".to_owned()));
             assert_eq!(d.next(), None);
         }
     }
 
-    mod moleculas {
+    mod upgraded_moleculas {
         use super::*;
 
         #[test]
@@ -233,7 +233,7 @@ mod tests {
                 ("O".to_owned(), "HH".to_owned()),
             ];
             let f = "HOH".to_owned();
-            let mut d = Moleculas::new(&r, &f);
+            let mut d = UpgradedMoleculas::new(&r, &f);
             assert_eq!(d.next(), Some("HOOH".to_owned()));
             assert_eq!(d.next(), Some("HOHO".to_owned()));
             assert_eq!(d.next(), Some("OHOH".to_owned()));
