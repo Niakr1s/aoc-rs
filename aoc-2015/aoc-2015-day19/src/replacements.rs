@@ -14,6 +14,28 @@ impl Replacements {
     }
 }
 
+pub fn steps(start: &str, want: &str, replacements: &Replacements) -> Vec<Vec<String>> {
+    if start == want {
+        return vec![vec![start.to_owned()]];
+    } else if start.len() > want.len() {
+        return vec![];
+    }
+
+    let mut ret = vec![];
+    for repl in replacements.distinct_moleculas(start) {
+        let mut substeps = steps(&repl, want, replacements)
+            .into_iter()
+            .map(|mut v| {
+                let mut ret = vec![start.to_owned()];
+                ret.append(&mut v);
+                ret
+            })
+            .collect();
+        ret.append(&mut substeps);
+    }
+    ret
+}
+
 pub struct Moleculas<'a> {
     replacements: std::slice::Iter<'a, (String, String)>,
     current_replacement: Option<&'a (String, String)>,
@@ -90,6 +112,25 @@ impl FromStr for Replacements {
 #[allow(unused_imports)]
 mod tests {
     use super::*;
+
+    mod steps {
+        use super::*;
+
+        #[test]
+        fn works() {
+            let r = vec![
+                ("e".to_owned(), "H".to_owned()),
+                ("e".to_owned(), "O".to_owned()),
+                ("H".to_owned(), "HO".to_owned()),
+                ("H".to_owned(), "OH".to_owned()),
+                ("O".to_owned(), "HH".to_owned()),
+            ];
+            let r = Replacements(r);
+            // let got = steps("e", "HOH", &r);
+            let got = steps("e", "HOHOHO", &r);
+            assert_ne!(got.len(), 0);
+        }
+    }
 
     mod moleculas {
         use super::*;
