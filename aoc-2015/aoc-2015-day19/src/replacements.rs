@@ -12,31 +12,85 @@ impl Replacements {
     ) -> impl Iterator<Item = String> + 'a {
         Moleculas::new(&self.0, molecula).unique()
     }
+
+    pub fn collapsed_moleculas<'a>(
+        &'a self,
+        molecula: &'a str,
+    ) -> impl Iterator<Item = String> + 'a {
+        CollapsedMoleculas::new(&self.0, molecula).unique()
+    }
 }
 
-pub fn steps(start: &str, want: &str, replacements: &Replacements) -> Vec<Vec<String>> {
+pub fn steps(start: &str, want: &str, replacements: &Replacements) -> Option<usize> {
+    // println!("\n{} -> {}\n", start, want);
     if start == want {
-        return vec![vec![start.to_owned()]];
-    } else if start.len() > want.len() {
-        return vec![];
+        return Some(0);
+    } else if start.len() >= want.len() {
+        return None;
     }
 
-    let mut ret = vec![];
-    for repl in replacements.distinct_moleculas(start) {
-        let mut substeps = steps(&repl, want, replacements)
-            .into_iter()
-            .map(|mut v| {
-                let mut ret = vec![start.to_owned()];
-                ret.append(&mut v);
-                ret
-            })
-            .collect();
-        ret.append(&mut substeps);
-    }
-    ret
+    replacements
+        .distinct_moleculas(start)
+        .into_iter()
+        .filter_map(|repl| steps(&repl, want, replacements).map(|i| i + 1))
+        .min()
 }
 
-pub struct Moleculas<'a> {
+struct CollapsedMoleculas<'a> {
+    replacements: std::slice::Iter<'a, (String, String)>,
+    current_replacement: Option<&'a (String, String)>,
+    molecula: &'a str,
+    molecula_idx: usize,
+}
+
+impl<'a> CollapsedMoleculas<'a> {
+    pub fn new(replacements: &'a Vec<(String, String)>, molecula: &'a str) -> Self {
+        CollapsedMoleculas {
+            replacements: replacements.iter(),
+            current_replacement: None,
+            molecula,
+            molecula_idx: 0,
+        }
+    }
+}
+
+impl<'a> Iterator for CollapsedMoleculas<'a> {
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(&(ref to, ref from)) = self.current_replacement {
+            let idx = self.molecula[self.molecula_idx..]
+                .find(from)
+                .map(|idx| idx + self.molecula_idx);
+            if let Some(idx) = idx {
+                self.molecula_idx = idx + from.len();
+
+                let mut ret = String::new();
+                ret.push_str(&self.molecula[..idx]);
+                ret.push_str(&to);
+                ret.push_str(&self.molecula[self.molecula_idx..]);
+                if ret != "e" && ret.chars().any(|c| c == 'e') {
+                    return self.next();
+                } else {
+                    return Some(ret);
+                }
+            } else {
+                self.molecula_idx = 0;
+                self.current_replacement = self.replacements.next();
+                return self.next();
+            }
+        } else {
+            self.current_replacement = self.replacements.next();
+            if self.current_replacement.is_some() {
+                return self.next();
+            } else {
+                return None;
+            }
+        }
+    }
+}
+
+struct Moleculas<'a> {
     replacements: std::slice::Iter<'a, (String, String)>,
     current_replacement: Option<&'a (String, String)>,
     molecula: &'a str,
@@ -126,9 +180,28 @@ mod tests {
                 ("O".to_owned(), "HH".to_owned()),
             ];
             let r = Replacements(r);
-            // let got = steps("e", "HOH", &r);
-            let got = steps("e", "HOHOHO", &r);
-            assert_ne!(got.len(), 0);
+            assert_eq!(steps("e", "HOH", &r), Some(3));
+            assert_eq!(steps("e", "HOHOHO", &r), Some(6));
+        }
+    }
+
+    mod collapsed_moleculas {
+        use super::*;
+
+        #[test]
+        fn works() {
+            let replacements = Replacements(vec![
+                ("e".to_owned(), "H".to_owned()),
+                ("e".to_owned(), "O".to_owned()),
+                ("H".to_owned(), "HO".to_owned()),
+                ("H".to_owned(), "OH".to_owned()),
+                ("O".to_owned(), "HH".to_owned()),
+            ]);
+            let molecula = "HOH".to_owned();
+            let mut d = replacements.collapsed_moleculas(&molecula);
+
+            assert_eq!(d.next(), Some("HH".to_owned()));
+            assert_eq!(d.next(), None);
         }
     }
 

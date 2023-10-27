@@ -11,11 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let distinct_moleculas_count = replacements.distinct_moleculas(molecula).count();
     println!("Part1: {}", distinct_moleculas_count);
 
-    let steps_count = steps("e", molecula, &replacements)
-        .into_iter()
-        .map(|v| v.len())
-        .min()
-        .unwrap();
+    let steps_count = steps("e", molecula, &replacements).unwrap();
     println!("Part2: {}", steps_count);
 
     Ok(())
