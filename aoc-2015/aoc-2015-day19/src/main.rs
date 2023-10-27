@@ -1,5 +1,4 @@
 use aoc_2015_day19::replacements::Replacements;
-use itertools::Itertools;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filepath = helpers::get_filepath_from_args();
@@ -9,7 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .trim()
         .split_at(input.rfind('\n').expect("No newline before formula"));
     let replacements = replacements.parse::<Replacements>()?;
-    let distinct_moleculas_count = replacements.distinct_moleculas(molecula).unique().count();
+    let distinct_moleculas_count = replacements.distinct_moleculas(molecula).count();
     println!("Part1: {}", distinct_moleculas_count);
 
     Ok(())

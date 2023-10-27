@@ -1,24 +1,29 @@
 use std::str::FromStr;
 
+use itertools::Itertools;
+
 #[derive(Debug)]
 pub struct Replacements(Vec<(String, String)>);
 
 impl Replacements {
-    pub fn distinct_moleculas<'a>(&'a self, molecula: &'a str) -> DistinctMoleculas<'a> {
-        DistinctMoleculas::new(&self.0, molecula)
+    pub fn distinct_moleculas<'a>(
+        &'a self,
+        molecula: &'a str,
+    ) -> impl Iterator<Item = String> + 'a {
+        Moleculas::new(&self.0, molecula).unique()
     }
 }
 
-pub struct DistinctMoleculas<'a> {
+pub struct Moleculas<'a> {
     replacements: std::slice::Iter<'a, (String, String)>,
     current_replacement: Option<&'a (String, String)>,
     molecula: &'a str,
     molecula_idx: usize,
 }
 
-impl<'a> DistinctMoleculas<'a> {
+impl<'a> Moleculas<'a> {
     pub fn new(replacements: &'a Vec<(String, String)>, molecula: &'a str) -> Self {
-        DistinctMoleculas {
+        Moleculas {
             replacements: replacements.iter(),
             current_replacement: None,
             molecula,
@@ -27,7 +32,7 @@ impl<'a> DistinctMoleculas<'a> {
     }
 }
 
-impl<'a> Iterator for DistinctMoleculas<'a> {
+impl<'a> Iterator for Moleculas<'a> {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -86,7 +91,7 @@ impl FromStr for Replacements {
 mod tests {
     use super::*;
 
-    mod distinct_moleculas {
+    mod moleculas {
         use super::*;
 
         #[test]
@@ -97,7 +102,7 @@ mod tests {
                 ("O".to_owned(), "HH".to_owned()),
             ];
             let f = "HOH".to_owned();
-            let mut d = DistinctMoleculas::new(&r, &f);
+            let mut d = Moleculas::new(&r, &f);
             assert_eq!(d.next(), Some("HOOH".to_owned()));
             assert_eq!(d.next(), Some("HOHO".to_owned()));
             assert_eq!(d.next(), Some("OHOH".to_owned()));
