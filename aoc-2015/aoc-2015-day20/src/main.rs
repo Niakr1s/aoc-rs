@@ -1,4 +1,4 @@
-use aoc_2015_day20::PresentsIter;
+use aoc_2015_day20::{Deliver1, Deliver2, PresentsIter};
 
 const USAGE: &str = "Usage: aoc-2015-day20 part1|part2";
 
@@ -15,7 +15,7 @@ fn main() {
 
 fn part1() {
     println!("Running part 1...");
-    let house = PresentsIter::new_deliver1()
+    let house = PresentsIter::new(Deliver1)
         .skip_while(|house| house.amount < 36000000)
         .next()
         .unwrap();
@@ -24,7 +24,7 @@ fn part1() {
 
 fn part2() {
     println!("Running part 2...");
-    let house = PresentsIter::new_deliver2()
+    let house = PresentsIter::new(Deliver2)
         .skip_while(|house| house.amount < 36000000)
         .next()
         .unwrap();

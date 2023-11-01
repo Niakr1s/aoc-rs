@@ -4,50 +4,64 @@ pub struct HouseWithPresents {
     pub amount: u64,
 }
 
-pub struct PresentsIter {
+pub struct PresentsIter<D>
+where
+    D: Delieve,
+{
     next_house: u32,
-    deliver: fn(u32) -> u64,
+    deliver: D,
 }
 
-impl PresentsIter {
-    pub fn new_deliver1() -> Self {
+impl<D> PresentsIter<D>
+where
+    D: Delieve,
+{
+    pub fn new(deliver: D) -> Self {
         Self {
             next_house: 1,
-            deliver: deliver1,
-        }
-    }
-
-    pub fn new_deliver2() -> Self {
-        Self {
-            next_house: 1,
-            deliver: deliver2,
+            deliver,
         }
     }
 }
 
-impl Iterator for PresentsIter {
+impl<D> Iterator for PresentsIter<D>
+where
+    D: Delieve,
+{
     type Item = HouseWithPresents;
 
     fn next(&mut self) -> Option<Self::Item> {
         let house = self.next_house;
         self.next_house += 1;
-        let amount = (self.deliver)(house);
+        let amount = self.deliver.deliver(house);
         Some(HouseWithPresents { house, amount })
     }
 }
 
-fn deliver1(house: u32) -> u64 {
-    let elves = find_divisors(house);
-    elves.into_iter().map(|elf| elf as u64 * 10).sum()
+pub trait Delieve {
+    fn deliver(&mut self, house: u32) -> u64;
 }
 
-fn deliver2(house: u32) -> u64 {
-    // we won't use find_divisors function, because it's not more than 50 elves
-    let start_elf = house.checked_sub(50).unwrap_or(0) + 1;
-    let elves = start_elf..=house;
-    elves
-        .map(|elf| if house % elf == 0 { elf as u64 * 11 } else { 0 })
-        .sum()
+pub struct Deliver1;
+
+impl Delieve for Deliver1 {
+    fn deliver(&mut self, house: u32) -> u64 {
+        let elves = find_divisors(house);
+        elves.into_iter().map(|elf| elf as u64 * 10).sum()
+    }
+}
+
+pub struct Deliver2;
+
+impl Delieve for Deliver2 {
+    fn deliver(&mut self, house: u32) -> u64 {
+        // we won't use find_divisors function, because it's not more than 50 elves
+        let start_elf = house.checked_sub(50).unwrap_or(0) + 1;
+        let elves = start_elf..=house;
+        elves
+            .map(|elf| if house % elf == 0 { elf as u64 * 11 } else { 0 })
+            .sum()
+    }
 }
 
 fn find_divisors(n: u32) -> Vec<u32> {
@@ -76,7 +90,7 @@ mod tests {
 
     #[test]
     fn presents_deliver1_works() {
-        let mut presents = PresentsIter::new_deliver1();
+        let mut presents = PresentsIter::new(Deliver1);
 
         let want_presents = [10, 30, 40, 70, 60, 120, 80, 150, 130];
 
@@ -90,7 +104,7 @@ mod tests {
 
     #[test]
     fn presents_deliver2_works() {
-        let mut presents = PresentsIter::new_deliver2();
+        let mut presents = PresentsIter::new(Deliver2);
 
         let want_presents = [11, 33, 44, 77, 66, 132, 88, 165, 143];
 
