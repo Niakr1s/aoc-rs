@@ -6,22 +6,19 @@ pub struct HouseWithPresents {
     pub amount: u64,
 }
 
-pub struct PresentsIter<D>
-where
-    D: Delieve,
-{
+pub struct PresentsIter<D> {
     next_house: u32,
     deliver: D,
 }
 
 impl<D> PresentsIter<D>
 where
-    D: Delieve,
+    D: Default,
 {
-    pub fn new(deliver: D) -> Self {
+    pub fn new() -> Self {
         Self {
             next_house: 1,
-            deliver,
+            deliver: D::default(),
         }
     }
 }
@@ -114,7 +111,7 @@ mod tests {
 
     #[test]
     fn presents_deliver1_works() {
-        let mut presents = PresentsIter::new(Deliver1);
+        let mut presents = PresentsIter::<Deliver1>::new();
 
         let want_presents = [10, 30, 40, 70, 60, 120, 80, 150, 130];
 
@@ -128,7 +125,7 @@ mod tests {
 
     #[test]
     fn presents_deliver2_works() {
-        let mut presents = PresentsIter::new(Deliver2::new());
+        let mut presents = PresentsIter::<Deliver2>::new();
 
         let want_presents = [11, 33, 44, 77, 66, 132, 88, 165, 143];
 
