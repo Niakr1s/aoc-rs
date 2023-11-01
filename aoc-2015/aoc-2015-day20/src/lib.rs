@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct HouseWithPresents {
     pub house: u32,
@@ -42,6 +44,7 @@ pub trait Delieve {
     fn deliver(&mut self, house: u32) -> u64;
 }
 
+#[derive(Default)]
 pub struct Deliver1;
 
 impl Delieve for Deliver1 {
@@ -51,15 +54,36 @@ impl Delieve for Deliver1 {
     }
 }
 
-pub struct Deliver2;
+#[derive(Default)]
+pub struct Deliver2 {
+    elf_visited: HashMap<u32, u32>,
+}
+
+impl Deliver2 {
+    pub fn new() -> Self {
+        Self {
+            elf_visited: HashMap::new(),
+        }
+    }
+}
 
 impl Delieve for Deliver2 {
     fn deliver(&mut self, house: u32) -> u64 {
-        // we won't use find_divisors function, because it's not more than 50 elves
-        let start_elf = house.checked_sub(50).unwrap_or(0) + 1;
-        let elves = start_elf..=house;
+        let elves = find_divisors(house);
         elves
-            .map(|elf| if house % elf == 0 { elf as u64 * 11 } else { 0 })
+            .into_iter()
+            .filter_map(|elf| {
+                let entry = self.elf_visited.entry(elf).or_insert(0);
+                if *entry >= 50 {
+                    return None;
+                }
+                if house % elf == 0 {
+                    *entry += 1;
+                    Some(elf as u64 * 11)
+                } else {
+                    None
+                }
+            })
             .sum()
     }
 }
@@ -104,7 +128,7 @@ mod tests {
 
     #[test]
     fn presents_deliver2_works() {
-        let mut presents = PresentsIter::new(Deliver2);
+        let mut presents = PresentsIter::new(Deliver2::new());
 
         let want_presents = [11, 33, 44, 77, 66, 132, 88, 165, 143];
 
@@ -126,7 +150,7 @@ mod tests {
 
         let house52 = presents.by_ref().next().unwrap();
         assert_eq!(house52.house, 52);
-        assert_eq!(house52.amount, (4 + 13 + 26 + 52) * 11);
+        assert_eq!(house52.amount, (2 + 4 + 13 + 26 + 52) * 11);
     }
 
     #[test]

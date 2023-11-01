@@ -24,7 +24,7 @@ fn part1() {
 
 fn part2() {
     println!("Running part 2...");
-    let house = PresentsIter::new(Deliver2)
+    let house = PresentsIter::new(Deliver2::new())
         .skip_while(|house| house.amount < 36000000)
         .next()
         .unwrap();
