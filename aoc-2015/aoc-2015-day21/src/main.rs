@@ -8,11 +8,38 @@ use aoc_2015_day21::{
 
 fn main() {
     let shop = make_shop();
+    let boss = make_boss();
     let player_hp = 100;
 
+    let min_cost = find_min_cost_win(&shop, player_hp, &boss);
+    println!("Part 1: min cost to win: {:?}", min_cost);
+
+    let max_cost = find_max_cost_lose(&shop, player_hp, &boss);
+    println!("Part 2: max cost to lose: {:?}", max_cost);
+}
+
+fn find_max_cost_lose(shop: &Shop, player_hp: u32, boss: &Boss) -> Option<u32> {
+    let mut max_cost: Option<u32> = None;
+    for equip in shop.player_equip_combinations() {
+        let mut boss = boss.clone();
+        let mut player = Player {
+            hp: player_hp,
+            equip,
+        };
+        let player_win = fight_till_death(&mut player, &mut boss);
+        if !player_win {
+            let equip_cost = player.equip.total_cost();
+            println!("equip cost: {}", equip_cost);
+            max_cost = max_cost.map_or(Some(equip_cost), |max_cost| Some(max_cost.max(equip_cost)));
+        }
+    }
+    max_cost
+}
+
+fn find_min_cost_win(shop: &Shop, player_hp: u32, boss: &Boss) -> Option<u32> {
     let mut min_cost: Option<u32> = None;
     for equip in shop.player_equip_combinations() {
-        let mut boss = make_boss();
+        let mut boss = boss.clone();
         let mut player = Player {
             hp: player_hp,
             equip,
@@ -23,7 +50,7 @@ fn main() {
             min_cost = min_cost.map_or(Some(equip_cost), |min_cost| Some(min_cost.min(equip_cost)));
         }
     }
-    println!("Part 1: {:?}", min_cost);
+    min_cost
 }
 
 fn make_boss() -> Boss {
