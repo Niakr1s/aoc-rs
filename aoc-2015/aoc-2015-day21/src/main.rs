@@ -29,7 +29,6 @@ fn find_max_cost_lose(shop: &Shop, player_hp: u32, boss: &Boss) -> Option<u32> {
         let player_win = fight_till_death(&mut player, &mut boss);
         if !player_win {
             let equip_cost = player.equip.total_cost();
-            println!("equip cost: {}", equip_cost);
             max_cost = max_cost.map_or(Some(equip_cost), |max_cost| Some(max_cost.max(equip_cost)));
         }
     }

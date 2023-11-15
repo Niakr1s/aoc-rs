@@ -1,4 +1,4 @@
-use itertools::iproduct;
+use itertools::{iproduct, Itertools};
 
 use crate::{
     items::{Armor, Ring, Weapon},
@@ -15,13 +15,17 @@ impl Shop {
     pub fn player_equip_combinations(&self) -> impl Iterator<Item = Equip> + '_ {
         let weapons = self.weapons.iter();
         let armors = self.armors.iter().map(|a| Some(a)).chain(vec![None]);
-        let left_rings = self.rings.iter().map(|r| Some(r)).chain(vec![None]);
-        let right_rings = left_rings.clone();
-        iproduct!(weapons, armors, left_rings, right_rings).map(|(w, a, lr, rr)| Equip {
+        let rings = self
+            .rings
+            .iter()
+            .map(|r| Some(r))
+            .chain(vec![None])
+            .combinations(2);
+        iproduct!(weapons, armors, rings).map(|(w, a, r)| Equip {
             weapon: w.clone(),
             armor: a.cloned(),
-            left_ring: lr.cloned(),
-            right_ring: rr.cloned(),
+            left_ring: r[0].cloned(),
+            right_ring: r[1].cloned(),
         })
     }
 }
